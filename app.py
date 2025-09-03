@@ -170,7 +170,7 @@ with st.sidebar:
 # -----------------------------
 # Main content
 # -----------------------------
-# Sticky header
+# Sticky header container
 st.markdown(
     """
     <style>
@@ -187,27 +187,11 @@ st.markdown(
         border-bottom: 2px solid #3498db;
         z-index: 9999;
     }
-    .main-content-padding {
-        padding-top: 50px; /* adjust this to match header height */
-    }
     </style>
     <div class="sticky-header">🇸🇿 Eswatini AgriVision Hub 🌾</div>
     """,
     unsafe_allow_html=True
 )
-
-# Wrap main content in a div with padding
-st.markdown('<div class="main-content-padding">', unsafe_allow_html=True)
-
-# --- Main content starts here ---
-st.markdown(f'<h1 class="main-header">📈 {selected_variable} Forecast</h1>', unsafe_allow_html=True)
-
-# ... rest of your content ...
-
-# Close the div at the very end of main content
-st.markdown('</div>', unsafe_allow_html=True)
-# Then your selected variable forecast title
-st.markdown(f'<h1 class="main-header">📈 {selected_variable} Forecast</h1>', unsafe_allow_html=True)
 
 # Variable-specific forecast header
 st.markdown(f'<h2 class="main-header">📈 {selected_variable} Forecast</h2>', unsafe_allow_html=True)
