@@ -236,52 +236,52 @@ with col4:
     st.metric("Volatility", f"{volatility:.1f}%", "30-day average")
 
 # Main forecast plot
-st.markdown("### 📊 Forecast Visualization")
-fig = go.Figure()
+#st.markdown("### 📊 Forecast Visualization")
+#fig = go.Figure()
 
 # Historical data
-fig.add_trace(go.Scatter(
-    x=df['date'],
-    y=df[selected_variable],
-    mode='lines',
-    name='Historical',
-    line=dict(color='#3498db', width=3),
-    hovertemplate='<b>Date:</b> %{x}<br><b>Value:</b> %{y:.2f}<extra></extra>'
-))
+#fig.add_trace(go.Scatter(
+#    x=df['date'],
+#    y=df[selected_variable],
+#    mode='lines',
+#    name='Historical',
+#    line=dict(color='#3498db', width=3),
+#    hovertemplate='<b>Date:</b> %{x}<br><b>Value:</b> %{y:.2f}<extra></extra>'
+#))
 
 # Forecast data
-forecast_data = forecasts[selected_variable]
-fig.add_trace(go.Scatter(
-    x=forecast_data['date'],
-    y=forecast_data['forecast'],
-    mode='lines',
-    name='Forecast',
-    line=dict(color='#e74c3c', width=3, dash='dash'),
-    hovertemplate='<b>Date:</b> %{x}<br><b>Forecast:</b> %{y:.2f}<extra></extra>'
-))
+#forecast_data = forecasts[selected_variable]
+#fig.add_trace(go.Scatter(
+#    x=forecast_data['date'],
+#    y=forecast_data['forecast'],
+#    mode='lines',
+#    name='Forecast',
+#    line=dict(color='#e74c3c', width=3, dash='dash'),
+#    hovertemplate='<b>Date:</b> %{x}<br><b>Forecast:</b> %{y:.2f}<extra></extra>'
+#))
 
 # Confidence interval
-fig.add_trace(go.Scatter(
-    x=forecast_data['date'].tolist() + forecast_data['date'].tolist()[::-1],
-    y=forecast_data['upper_ci'].tolist() + forecast_data['lower_ci'].tolist()[::-1],
-    fill='toself',
-    fillcolor='rgba(231, 76, 60, 0.2)',
-    line=dict(color='rgba(255,255,255,0)'),
-    name=f'{confidence_level}% Confidence',
-    hoverinfo='skip'
-))
+#fig.add_trace(go.Scatter(
+#    x=forecast_data['date'].tolist() + forecast_data['date'].tolist()[::-1],
+#    y=forecast_data['upper_ci'].tolist() + forecast_data['lower_ci'].tolist()[::-1],
+#    fill='toself',
+#    fillcolor='rgba(231, 76, 60, 0.2)',
+#    line=dict(color='rgba(255,255,255,0)'),
+#    name=f'{confidence_level}% Confidence',
+#    hoverinfo='skip'
+#))
 
-fig.update_layout(
-    height=500,
-    showlegend=True,
-    plot_bgcolor='white',
-    paper_bgcolor='white',
-    xaxis_title='Date',
-    yaxis_title='Value',
-    hovermode='x unified'
-)
+#fig.update_layout(
+#    height=500,
+#    showlegend=True,
+#    plot_bgcolor='white',
+#    paper_bgcolor='white',
+#    xaxis_title='Date',
+#    yaxis_title='Value',
+#    hovermode='x unified'
+#)
 
-st.plotly_chart(fig, use_container_width=True)
+#st.plotly_chart(fig, use_container_width=True)
 
 # Tabs for additional information
 tab1, tab2, tab3, tab4 = st.tabs(["📋 Model Performance", "🔍 Feature Analysis", "📈 Comparative View", "💡 Insights"])
