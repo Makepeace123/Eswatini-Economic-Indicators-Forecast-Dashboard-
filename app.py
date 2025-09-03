@@ -153,7 +153,7 @@ st.markdown(f'<h1 class="main-header">📈 {selected_variable} Forecast</h1>', u
 # Metrics row
 col1, col2, col3, col4 = st.columns(4)
 
-#with col1:
+with col1:
     current_value = df[selected_variable].iloc[-1]
     st.metric("Current Value", f"{current_value:.2f}")
 
