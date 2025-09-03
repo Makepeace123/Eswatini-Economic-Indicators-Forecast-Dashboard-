@@ -170,12 +170,28 @@ with st.sidebar:
 # -----------------------------
 # Main content
 # -----------------------------
-
 # Sticky header container
 st.markdown(
-# App title at the very top
-st.markdown("🇸🇿 **Eswatini AgriVision Hub 🌾**", unsafe_allow_html=True)
-
+    """
+    <style>
+    .sticky-header {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        color: #2c3e50;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        padding: 10px 0;
+        border-bottom: 2px solid #3498db;
+        z-index: 9999;
+    }
+    </style>
+    <div class="sticky-header">🇸🇿 Eswatini AgriVision Hub 🌾</div>
+    """,
+    unsafe_allow_html=True
+)
 # Then your selected variable forecast title
 st.markdown(f'<h1 class="main-header">📈 {selected_variable} Forecast</h1>', unsafe_allow_html=True)
 
