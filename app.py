@@ -313,8 +313,17 @@ with tab4:
 # Footer and Download
 # -----------------------------
 st.markdown("---")
-st.markdown(f"<div style='text-align:center'><p>🌱 Eswatini Agriculture Forecasting System | Powered by Machine Learning</p><p><small>Data updated: {datetime.now().strftime('%Y-%m-%d')}</small></p></div>", unsafe_allow_html=True)
-
+st.markdown(
+    f"""
+    <div style='text-align:center'>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Flag_of_Eswatini.svg/1200px-Flag_of_Eswatini.svg.png" 
+             width="80" style="margin-bottom:10px;">
+        <p>🌱 <b>Eswatini Agriculture Forecasting System</b> | Powered by Machine Learning</p>
+        <p><small>Data updated: {datetime.now().strftime('%Y-%m-%d')}</small></p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📥 Download 30-Day Forecast")
 if st.sidebar.button("Download CSV"):
