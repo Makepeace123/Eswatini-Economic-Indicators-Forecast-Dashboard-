@@ -182,6 +182,17 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
+
+# Get values for display
+current_value = df[selected_variable].iloc[-1]
+
+forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]
+change_pct = ((forecast_value - current_value) / current_value) * 100
+
+best_model = 'xgb'  # or your logic for selecting best model
+volatility = df[selected_variable].pct_change().std() * 100
+
 st.markdown(
     f"""
     <div class="kpi-container">
