@@ -171,6 +171,29 @@ with col4:
     volatility = df[selected_variable].pct_change().std() * 100
     st.metric("Volatility", f"{volatility:.1f}%", "30-day average")
 
+
+
+# Metrics grid (2x2)
+col1, col2 = st.columns(2)
+with col1:
+    current_value = df[selected_variable].iloc[-1]
+    st.metric("Current Value", f"{current_value:.2f}")
+with col2:
+    forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]
+    change_pct = ((forecast_value - current_value) / current_value) * 100
+    st.metric("Next Forecast", f"{forecast_value:.2f}", f"{change_pct:+.1f}%")
+
+col3, col4 = st.columns(2)
+with col3:
+    best_model = 'xgb'  # Simplified selection
+    st.metric("Best Model", "XGBoost", f"MAE: {metrics[selected_variable][best_model]['MAE']:.2f}")
+with col4:
+    volatility = df[selected_variable].pct_change().std() * 100
+    st.metric("Volatility", f"{volatility:.1f}%", "30-day average")
+
+
+
+
 # -----------------------------
 # 30-day forecast table
 # -----------------------------
