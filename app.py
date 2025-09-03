@@ -33,8 +33,8 @@ st.markdown("""
 # Forecast values
 # -----------------------------
 forecast_values = {
-    'Tomato SZL/1kg': 13,
     'Cabbage SZL/Head': 15,
+    'Tomato SZL/1kg': 13,
     'Maize SZL/50kg': 290,
     'Potatoes SZL/50kg': 82,
     'Sugar SZL/1kg': 18,
@@ -111,8 +111,7 @@ metrics = generate_metrics()
 # -----------------------------
 @st.cache_data
 def generate_feature_importance():
-    features = ['Tomato (Round) SZL/1kg',
-    'Onion SZL/1kg',
+    features = ['Onion SZL/1kg', 'Tomato (Round) SZL/1kg',
     'Rice SZL/1kg',
     'Gas SZL/1 liter',
     'Beans SZL/1kg',
