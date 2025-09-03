@@ -111,8 +111,31 @@ metrics = generate_metrics()
 # -----------------------------
 @st.cache_data
 def generate_feature_importance():
-    features = ['Diesel Price', 'Rainfall', 'Transport Costs', 'Seasonal Factor', 
-                'Global Prices', 'Local Production', 'Exchange Rate', 'Input Costs']
+    features = ['Tomato (Round) SZL/1kg',
+    'Onion SZL/1kg',
+    'Rice SZL/1kg',
+    'Gas SZL/1 liter',
+    'Beans SZL/1kg',
+    'Cabbage SZL/Head',
+    'Diesel SZL/1 liter',
+    'Maize SZL/50kg',
+    'Brown Bread SZL',
+    'Sugar SZL/1kg',
+    'Potatoes SZL/50kg',
+    'Maize meal SZL/1kg',
+    'Money supply SZL',
+    'GDP by economic activity (Current Prices)',
+    'Interest Rate (Prime lending rate)',
+    'All Items CPI',
+    'Inflation rate',
+    'GDP Growth',
+    'CABA_GDP',
+    'Electricity',
+    'SA_Inflation',
+    'SA_GDP_Growth',
+    'SACU_Rev (GDP)',
+    'Net migration',
+    'Access to clean fuels and technologies for cooking (% of population)']
     importance = {}
     for var in forecast_values.keys():
         imp_values = {f: round(np.random.uniform(0.1,1.0),3) for f in features}
