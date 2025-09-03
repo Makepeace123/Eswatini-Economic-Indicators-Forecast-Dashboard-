@@ -173,26 +173,29 @@ with col4:
 
 
 
-# Metrics grid (2x2)
-# Top row
-top1, top2 = st.columns(2)
-with top1:
-    current_value = df[selected_variable].iloc[-1]
-    st.metric("Current Value", f"{current_value:.2f}")
-with top2:
-    forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]
-    change_pct = ((forecast_value - current_value) / current_value) * 100
-    st.metric("Next Forecast", f"{forecast_value:.2f}", f"{change_pct:+.1f}%")
+st.markdown(
+    """
+    <style>
+    .kpi-container {display: grid; grid-template-columns: 1fr 1fr; gap: 20px;}
+    .kpi-card {background: #f9f9f9; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 2px 2px 6px rgba(0,0,0,0.1);}
+    .kpi-value {font-size: 24px; font-weight: bold;}
+    .kpi-label {color: gray; font-size: 14px;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-# Bottom row
-bottom1, bottom2 = st.columns(2)
-with bottom1:
-    best_model = 'xgb'
-    st.metric("Best Model", "XGBoost", f"MAE: {metrics[selected_variable][best_model]['MAE']:.2f}")
-with bottom2:
-    volatility = df[selected_variable].pct_change().std() * 100
-    st.metric("Volatility", f"{volatility:.1f}%", "30-day average")
-
+st.markdown(
+    f"""
+    <div class="kpi-container">
+        <div class="kpi-card"><div class="kpi-label">Current Value</div><div class="kpi-value">{df[selected_variable].iloc[-1]:.2f}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Next Forecast</div><div class="kpi-value">{forecast_value:.2f}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Best Model</div><div class="kpi-value">XGBoost (MAE: {metrics[selected_variable]['xgb']['MAE']:.2f})</div></div>
+        <div class="kpi-card"><div class="kpi-label">Volatility (30-day avg)</div><div class="kpi-value">{volatility:.1f}%</div></div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 
 # -----------------------------
