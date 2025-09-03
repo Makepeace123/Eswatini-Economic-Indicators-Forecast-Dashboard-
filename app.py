@@ -171,30 +171,28 @@ with st.sidebar:
 # Main content
 # -----------------------------
 
-st.markdown("""
+# Sticky header container
+st.markdown(
+    """
     <style>
-        .fixed-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background-color: #ffffff;
-            padding: 10px 20px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            z-index: 9999;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .header-space {
-            height: 60px;  /* space equal to header height */
-        }
+    .sticky-header {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        color: #2c3e50;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        padding: 10px 0;
+        border-bottom: 2px solid #3498db;
+        z-index: 9999;
+    }
     </style>
-    <div class="fixed-header">
-        🇸🇿 Eswatini AgriVision Hub 🌾
-    </div>
-    <div class="header-space"></div>
-""", unsafe_allow_html=True)
+    <div class="sticky-header">🇸🇿 Eswatini AgriVision Hub 🌾</div>
+    """,
+    unsafe_allow_html=True
+)
 
 # Variable-specific forecast header
 st.markdown(f'<h2 class="main-header">📈 {selected_variable} Forecast</h2>', unsafe_allow_html=True)
