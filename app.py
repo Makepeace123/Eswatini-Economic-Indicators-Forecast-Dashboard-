@@ -171,14 +171,32 @@ with col4:
     volatility = df[selected_variable].pct_change().std() * 100
     st.metric("Volatility", f"{volatility:.1f}%", "30-day average")
 
-
 st.markdown(
     """
     <style>
-    .kpi-container {display: grid; grid-template-columns: 1fr 1fr; gap: 20px;}
-    .kpi-card {background: #f9f9f9; padding: 20px; border-radius: 12px; text-align: center; box-shadow: 2px 2px 6px rgba(0,0,0,0.1);}
-    .kpi-value {font-size: 24px; font-weight: bold;}
-    .kpi-label {color: gray; font-size: 14px;}
+    .kpi-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .kpi-card {
+        background: #f2f2f2;  /* light gray background */
+        padding: 25px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
+    }
+    .kpi-value {
+        font-size: 28px;  /* bigger value font */
+        font-weight: bold;
+        color: #222222;  /* dark text */
+    }
+    .kpi-label {
+        color: #555555;  /* medium gray label */
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -187,15 +205,26 @@ st.markdown(
 st.markdown(
     f"""
     <div class="kpi-container">
-        <div class="kpi-card"><div class="kpi-label">Current Value</div><div class="kpi-value">{df[selected_variable].iloc[-1]:.2f}</div></div>
-        <div class="kpi-card"><div class="kpi-label">Next Forecast</div><div class="kpi-value">{forecast_value:.2f}</div></div>
-        <div class="kpi-card"><div class="kpi-label">Best Model</div><div class="kpi-value">XGBoost (MAE: {metrics[selected_variable]['xgb']['MAE']:.2f})</div></div>
-        <div class="kpi-card"><div class="kpi-label">Volatility (30-day avg)</div><div class="kpi-value">{volatility:.1f}%</div></div>
+        <div class="kpi-card">
+            <div class="kpi-label">Current Value</div>
+            <div class="kpi-value">{df[selected_variable].iloc[-1]:.2f}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Next Forecast</div>
+            <div class="kpi-value">{forecast_value:.2f} ({change_pct:+.1f}%)</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Best Model</div>
+            <div class="kpi-value">XGBoost<br><span style="font-size:18px;">MAE: {metrics[selected_variable]['xgb']['MAE']:.2f}</span></div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Volatility (30-day avg)</div>
+            <div class="kpi-value">{volatility:.1f}%</div>
+        </div>
     </div>
     """,
     unsafe_allow_html=True
 )
-
 
 # -----------------------------
 # 30-day forecast table
