@@ -264,8 +264,14 @@ with tab3:
     fig_corr = px.imshow(corr_matrix, text_auto=True, aspect="auto", title='Correlation Matrix')
     st.plotly_chart(fig_corr, use_container_width=True)
     
-    compare_vars = st.multiselect("Compare with:", [v for v in df.columns if v != selected_variable and v != 'date'],
-                                  default=[v for v in ['Diesel SZL/1 liter','Inflation rate'] if v in df.columns])
+options = [v for v in df.columns if v != selected_variable and v != 'date']
+valid_defaults = [v for v in ['Diesel SZL/1 liter', 'Inflation rate'] if v in options]
+
+compare_vars = st.multiselect(
+    "Compare with:",
+    options,
+    default=valid_defaults
+)
     if compare_vars:
         fig_comp = go.Figure()
         fig_comp.add_trace(go.Scatter(x=df['date'], y=df[selected_variable], name=selected_variable, line=dict(width=3)))
