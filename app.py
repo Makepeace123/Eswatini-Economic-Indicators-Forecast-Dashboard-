@@ -170,7 +170,7 @@ with st.sidebar:
 # -----------------------------
 # Main content
 # -----------------------------
-# Fixed top app name
+
 st.markdown("""
     <style>
         .fixed-header {
@@ -186,13 +186,14 @@ st.markdown("""
             z-index: 9999;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .main-content {
-            margin-top: 60px; /* same height as header to avoid overlap */
+        .header-space {
+            height: 60px;  /* space equal to header height */
         }
     </style>
     <div class="fixed-header">
         🇸🇿 Eswatini AgriVision Hub 🌾
     </div>
+    <div class="header-space"></div>
 """, unsafe_allow_html=True)
 
 # Variable-specific forecast header
