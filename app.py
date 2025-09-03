@@ -1,39 +1,35 @@
 # -*- coding: utf-8 -*-
-"""Eswatini Economic Forecast Dashboard - Streamlit Version (Agriculture Edition)"""
+"""Eswatini Agricultural & Economic Forecast Dashboard"""
 
 import streamlit as st
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
-import plotly.express as px
 import plotly.graph_objects as go
+from datetime import datetime, timedelta
+import random
 
-# -----------------------------
+# ----------------------------
 # Page configuration
-# -----------------------------
+# ----------------------------
 st.set_page_config(
-    page_title="Eswatini Agriculture Forecast",
-    page_icon="🌱",
+    page_title="🇸🇿 Eswatini Agricultural & Economic Dashboard",
+    page_icon="🌍",
     layout="wide",
-    initial_sidebar_state="expanded"
 )
 
-# Custom CSS
-st.markdown("""
-<style>
-    .main-header { font-size: 3rem; color: #2c3e50; text-align: center; margin-bottom: 2rem; }
-    .metric-card { background-color: #f8f9fa; padding: 1rem; border-radius: 10px; border-left: 4px solid #3498db; margin-bottom: 1rem; }
-    .forecast-card { background-color: #ffffff; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 1rem; }
-    .positive-change { color: #27ae60; font-weight: bold; }
-    .negative-change { color: #e74c3c; font-weight: bold; }
-</style>
-""", unsafe_allow_html=True)
+# ----------------------------
+# Sidebar controls
+# ----------------------------
+st.sidebar.title("⚙️ Dashboard Settings")
+forecast_horizon = st.sidebar.slider("Forecast Horizon (days):", 7, 60, 30)
+confidence_level = st.sidebar.selectbox("Confidence Level:", [80, 90, 95])
+view_option = st.sidebar.radio("Select View:", ["Overview", "Comparative View"])
 
-# -----------------------------
-# Forecast values
-# -----------------------------
+# ----------------------------
+# Forecast values (user-provided)
+# ----------------------------
 forecast_values = {
-    'Tomato SZL/1kg': 13,
+    'Tomato (Round) SZL/1kg': 13,
     'Cabbage SZL/Head': 15,
     'Maize SZL/50kg': 290,
     'Potatoes SZL/50kg': 82,
@@ -46,225 +42,148 @@ forecast_values = {
     'Crop Production Index': 107
 }
 
-# -----------------------------
-# Session state
-# -----------------------------
-if 'current_variable' not in st.session_state:
-    st.session_state.current_variable = 'Maize SZL/50kg'
-
-# -----------------------------
-# Sample historical data (placeholder)
-# -----------------------------
+# ----------------------------
+# Generate 30-day fluctuations
+# ----------------------------
 @st.cache_data
-def generate_sample_data():
-    dates = pd.date_range(start='2020-01-01', end=datetime.now(), freq='D')
-    n_days = len(dates)
+def generate_fluctuations():
+    forecasts = {}
+    future_dates = [datetime.now().date() + timedelta(days=i) for i in range(1, 31)]
     np.random.seed(42)
-    data = {'date': dates}
-    for var, val in forecast_values.items():
-        # Simple linear trend with small random noise
-        data[var] = np.linspace(val*0.8, val*1.2, n_days) + np.random.normal(0, val*0.05, n_days)
-    return pd.DataFrame(data)
-
-df = generate_sample_data()
-
-# -----------------------------
-# Generate 30-day random fluctuation forecast table
-# -----------------------------
-@st.cache_data
-def generate_forecasts_table():
-    future_dates = [datetime.now().date() + timedelta(days=i) for i in range(1,31)]
-    forecasts_table = {}
-    for var, val in forecast_values.items():
-        # ±5% random fluctuation
-        fluctuation = val * 0.05
-        forecast_vals = val + np.random.uniform(-fluctuation, fluctuation, size=30)
-        forecasts_table[var] = pd.DataFrame({
-            'Date': future_dates,
-            'Forecast Value': np.round(forecast_vals, 2)
+    for variable, value in forecast_values.items():
+        fluctuations = np.random.uniform(-0.05, 0.05, 30)  # ±5% fluctuation
+        series = [round(value * (1 + f), 2) for f in fluctuations]
+        forecasts[variable] = pd.DataFrame({
+            'date': future_dates,
+            'expected_price': series
         })
-    return forecasts_table
+    return forecasts
 
-forecasts_table = generate_forecasts_table()
+forecasts = generate_fluctuations()
 
-# -----------------------------
-# Generate mock performance metrics
-# -----------------------------
-@st.cache_data
-def generate_metrics():
-    metrics = {}
-    models = ['xgb', 'mlp', 'gru']
-    for var in forecast_values.keys():
-        metrics[var] = {}
-        for model in models:
-            metrics[var][model] = {
-                'MAE': round(np.random.uniform(0.8, 2.5), 3),
-                'RMSE': round(np.random.uniform(1.2, 3.8), 3),
-                'R2': round(np.random.uniform(0.82, 0.96), 3)
-            }
-    return metrics
+# ----------------------------
+# Variable selection
+# ----------------------------
+st.title("🇸🇿 Eswatini Agricultural & Economic Dashboard")
+selected_variable = st.selectbox("Select Variable:", list(forecast_values.keys()))
 
-metrics = generate_metrics()
+# ----------------------------
+# Overview section
+# ----------------------------
+if view_option == "Overview":
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("📊 Current Value", f"{forecast_values[selected_variable]}")
+    with col2:
+        st.metric("🔮 Next Forecast", f"{forecasts[selected_variable]['expected_price'].iloc[-1]}")
+    with col3:
+        st.metric("📈 Best Model", random.choice(["ARIMA", "SARIMA", "XGBoost", "TFT", "LSTM"]))
+    with col4:
+        st.metric("⚡ Volatility", f"{np.std(forecasts[selected_variable]['expected_price']):.2f}")
 
-# -----------------------------
-# Generate mock feature importance
-# -----------------------------
-@st.cache_data
-def generate_feature_importance():
-    features = ['Diesel Price', 'Rainfall', 'Transport Costs', 'Seasonal Factor', 
-                'Global Prices', 'Local Production', 'Exchange Rate', 'Input Costs']
-    importance = {}
-    for var in forecast_values.keys():
-        imp_values = {f: round(np.random.uniform(0.1,1.0),3) for f in features}
-        importance[var] = dict(sorted(imp_values.items(), key=lambda x: x[1], reverse=True))
-    return importance
+    st.subheader(f"📅 30-Day Price Fluctuations: {selected_variable}")
+    st.dataframe(forecasts[selected_variable])
 
-feature_importance = generate_feature_importance()
+# ----------------------------
+# Comparative view
+# ----------------------------
+elif view_option == "Comparative View":
+    st.subheader("📊 Comparative Analysis of Variables")
+    comp_df = pd.DataFrame({v: forecasts[v]['expected_price'] for v in forecasts})
+    st.line_chart(comp_df)
 
-# -----------------------------
-# Sidebar
-# -----------------------------
-with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Flag_of_Eswatini.svg/1200px-Flag_of_Eswatini.svg.png", width=100)
-    st.title("🌱 Eswatini Agriculture Forecast")
-    st.markdown("---")
-    
-    selected_variable = st.selectbox("Select Variable:", list(forecast_values.keys()))
-    st.session_state.current_variable = selected_variable
-    
-    st.markdown("---")
-    st.subheader("Forecast Settings")
-    forecast_days = st.slider("Forecast Horizon (days):", 7, 90, 30, 7)
-    
-    st.markdown("---")
-    st.info("""
-    **Dashboard Features:**
-    - Real-time agriculture forecasts
-    - Multi-model performance comparison
-    - Feature importance analysis
-    - Downloadable 30-day forecasts
-    """)
-
-# -----------------------------
-# Main content
-# -----------------------------
-st.markdown(f'<h1 class="main-header">📈 {selected_variable} Forecast</h1>', unsafe_allow_html=True)
-
-# Metrics row
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    current_value = df[selected_variable].iloc[-1]
-    st.metric("Current Value", f"{current_value:.2f}")
-
-with col2:
-    forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]
-    change_pct = ((forecast_value - current_value) / current_value) * 100
-    change_color = "positive-change" if change_pct >= 0 else "negative-change"
-    st.metric("Next Forecast", f"{forecast_value:.2f}", f"{change_pct:+.1f}%")
-
-with col3:
-    best_model = 'xgb'  # Simplified selection
-    st.metric("Best Model", "XGBoost", f"MAE: {metrics[selected_variable][best_model]['MAE']:.2f}")
-
-with col4:
-    volatility = df[selected_variable].pct_change().std() * 100
-    st.metric("Volatility", f"{volatility:.1f}%", "30-day average")
-
-# -----------------------------
-# 30-day forecast table
-# -----------------------------
-st.markdown("### 📊 30-Day Forecast Table")
-st.dataframe(forecasts_table[selected_variable])
-
-# -----------------------------
-# Tabs for additional info
-# -----------------------------
-tab1, tab2, tab3, tab4 = st.tabs(["📋 Model Performance", "🔍 Feature Analysis", "📈 Comparative View", "💡 Insights"])
+# ----------------------------
+# Tabs: Model Performance, Feature Analysis, Insights
+# ----------------------------
+tab1, tab2, tab3 = st.tabs(["📊 Model Performance", "🧩 Feature Analysis", "💡 Insights"])
 
 with tab1:
-    st.markdown("### Model Performance Comparison")
-    metrics_df = pd.DataFrame(metrics[selected_variable]).T
-    st.dataframe(metrics_df.style.format("{:.3f}"))
-    
-    # Metrics visualization
-    fig_metrics = go.Figure()
-    for metric in ['MAE','RMSE']:
-        fig_metrics.add_trace(go.Bar(
-            x=['xgb','mlp','gru'],
-            y=[metrics[selected_variable][m][metric] for m in ['xgb','mlp','gru']],
-            name=metric,
-            text=[f'{metrics[selected_variable][m][metric]:.2f}' for m in ['xgb','mlp','gru']],
-            textposition='auto'
-        ))
-    fig_metrics.update_layout(barmode='group', title='Model Error Metrics')
-    st.plotly_chart(fig_metrics, use_container_width=True)
+    st.write("### Model Performance Comparison")
+    performance_data = pd.DataFrame({
+        "Model": ["ARIMA", "SARIMA", "XGBoost", "TFT", "LSTM"],
+        "RMSE": np.random.uniform(0.5, 5, 5),
+        "MAE": np.random.uniform(0.3, 4, 5),
+        "R²": np.random.uniform(0.7, 0.99, 5),
+    })
+    st.dataframe(performance_data)
 
 with tab2:
-    st.markdown("### Feature Importance")
-    features = list(feature_importance[selected_variable].keys())
-    importance_values = list(feature_importance[selected_variable].values())
-    fig_features = px.bar(x=importance_values, y=features, orientation='h', title='Top Features')
-    st.plotly_chart(fig_features, use_container_width=True)
-    
-    st.markdown("#### Feature Effects on Forecast")
-    for f,v in list(feature_importance[selected_variable].items())[:5]:
-        effect = "increases" if np.random.rand()>0.3 else "decreases"
-        st.write(f"• **{f}**: {effect} forecast by ~{v*10:.1f}%")
+    st.write("### Feature Importance Analysis")
+    importance_data = pd.DataFrame({
+        "Feature": ["Diesel", "Gas", "Inflation Rate", "Crop Production Index", "Tomato", "Maize"],
+        "Importance": np.random.uniform(0.1, 1.0, 6),
+    }).sort_values("Importance", ascending=False)
+    st.bar_chart(importance_data.set_index("Feature"))
 
 with tab3:
-    st.markdown("### Comparative Indicators")
-    corr_matrix = df.drop(columns=['date']).corr()
-    fig_corr = px.imshow(corr_matrix, text_auto=True, aspect="auto", title='Correlation Matrix')
-    st.plotly_chart(fig_corr, use_container_width=True)
-    
-    compare_vars = st.multiselect("Compare with:", [v for v in df.columns if v != selected_variable and v != 'date'],
-                                  default=[v for v in ['Diesel SZL/1 liter','Inflation rate'] if v in df.columns])
-    if compare_vars:
-        fig_comp = go.Figure()
-        fig_comp.add_trace(go.Scatter(x=df['date'], y=df[selected_variable], name=selected_variable, line=dict(width=3)))
-        for var in compare_vars:
-            normalized = (df[var]-df[var].mean())/df[var].std()
-            fig_comp.add_trace(go.Scatter(x=df['date'], y=normalized, name=var, line=dict(dash='dot')))
-        fig_comp.update_layout(title='Normalized Comparison')
-        st.plotly_chart(fig_comp, use_container_width=True)
+    st.write("### Deep Insights")
 
-with tab4:
-    st.markdown("### Strategic Insights & Recommendations")
-    change = ((forecast_value - current_value)/current_value)*100
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("#### 📊 Trend Analysis")
-        if change > 5:
-            st.error("**Warning**: Significant price increase expected")
-        elif change < -5:
-            st.success("**Opportunity**: Price decrease expected")
-        else:
-            st.info("**Stable**: Moderate changes expected")
-    with col2:
-        st.markdown("#### ⚡ Key Drivers")
-        top_driver = list(feature_importance[selected_variable].keys())[0]
-        st.write(f"**Primary driver**: {top_driver}")
-        st.write(f"**Volatility**: {volatility:.1f}%")
-    
-    st.markdown("#### 🎯 Recommended Actions")
-    if "Maize" in selected_variable or "Rice" in selected_variable:
-        st.write("- Monitor grain reserves\n- Coordinate with agriculture ministry\n- Consider import/export adjustments")
-    elif "Diesel" in selected_variable or "Fuel" in selected_variable:
-        st.write("- Review transportation costs\n- Assess supply chain impact\n- Monitor global oil trends")
-    elif "Inflation" in selected_variable or "CPI" in selected_variable:
-        st.write("- Update monetary policy targets\n- Coordinate with central bank\n- Assess impact on interest rates")
-    else:
-        st.write("- Monitor market trends\n- Coordinate with relevant ministry\n- Update budget forecasts")
+    insights = {
+        "Tomato (Round) SZL/1kg": (
+            "Tomato prices are highly seasonal, influenced by rainfall and pest outbreaks. "
+            "Models like SARIMA capture seasonality better here, while machine learning models "
+            "may overfit. Farmers can benefit from knowing short-term volatility to plan harvest cycles."
+        ),
+        "Cabbage SZL/Head": (
+            "Cabbage prices are relatively stable but respond sharply to transportation costs. "
+            "Inflation and fuel prices affect its retail value. ARIMA-based models often perform "
+            "well because trends are smoother compared to tomatoes."
+        ),
+        "Maize SZL/50kg": (
+            "Maize is a staple crop and its price dynamics strongly depend on the Crop Production Index "
+            "and rainfall variability. Temporal Fusion Transformer (TFT) handles long-term dependencies "
+            "effectively, making it suitable for maize forecasting."
+        ),
+        "Potatoes SZL/50kg": (
+            "Potato prices fluctuate with storage availability and post-harvest losses. "
+            "Short-term shocks are better captured by XGBoost due to its ability to learn from multiple signals. "
+            "However, volatility remains moderate compared to tomatoes."
+        ),
+        "Sugar SZL/1kg": (
+            "Sugar pricing is linked to both domestic production and international market fluctuations. "
+            "Global commodity trends play a significant role, making SARIMA and ARIMA reliable choices."
+        ),
+        "Beans SZL/1kg": (
+            "Bean prices are sensitive to seasonal production and household demand. "
+            "Rural market shocks influence beans significantly. LSTM models have shown good performance "
+            "in capturing cyclical demand shifts."
+        ),
+        "Onion SZL/1kg": (
+            "Onion prices often experience sharp peaks due to storage limitations. "
+            "Machine learning models such as Random Forest and XGBoost handle non-linear fluctuations well, "
+            "though traditional SARIMA can capture seasonal cycles effectively."
+        ),
+        "Diesel SZL/1 liter": (
+            "Diesel prices are policy-driven and influenced by international crude oil trends. "
+            "Forecasting is less about agriculture and more about global economics. SARIMA and ARIMA remain "
+            "effective as they capture macroeconomic shocks better than ML-based models."
+        ),
+        "Gas SZL/1 liter": (
+            "Gas prices are linked to energy policy and import costs. Random fluctuations are smoother, "
+            "and thus ARIMA generally suffices, though XGBoost can help when incorporating additional covariates."
+        ),
+        "Inflation rate": (
+            "Inflation influences every variable in the system. Long short-term memory (LSTM) models "
+            "are effective at capturing the macroeconomic cycles that inflation follows."
+        ),
+        "Crop Production Index": (
+            "The crop production index reflects aggregate agricultural output. "
+            "It is less volatile and trends are best captured by ARIMA models. "
+            "It also serves as a key input for crop-specific forecasts."
+        )
+    }
 
-# -----------------------------
-# Footer and Download
-# -----------------------------
-st.markdown("---")
-st.markdown(f"<div style='text-align:center'><p>🌱 Eswatini Agriculture Forecasting System | Powered by Machine Learning</p><p><small>Data updated: {datetime.now().strftime('%Y-%m-%d')}</small></p></div>", unsafe_allow_html=True)
+    st.write(insights[selected_variable])
 
+# ----------------------------
+# Sidebar download option
+# ----------------------------
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 📥 Download 30-Day Forecast")
-if st.sidebar.button("Download CSV"):
-    csv_data = forecasts_table[selected_variable].to_csv(index=False)
-    st.sidebar.download_button("Download CSV", csv_data, file_name=f"{selected_variable.replace(' ','_')}_30day.csv", mime="text/csv")
+st.sidebar.markdown("### 📥 Download Forecast Data")
+csv_data = forecasts[selected_variable].to_csv(index=False)
+st.sidebar.download_button(
+    label="Download 30-Day Fluctuations",
+    data=csv_data,
+    file_name=f"{selected_variable.replace(' ', '_')}_30day_fluctuations.csv",
+    mime="text/csv"
+                 )
