@@ -33,10 +33,10 @@ st.markdown("""
 # Forecast values
 # -----------------------------
 forecast_values = {
-    'Maize SZL/50kg': 290,
     'Cabbage SZL/Head': 15,
     'Tomato SZL/1kg': 13,
     'Potatoes SZL/50kg': 82,
+    'Maize SZL/50kg': 290,
     'Sugar SZL/1kg': 18,
     'Beans SZL/1kg': 41,
     'Onion SZL/1kg': 9,
@@ -171,17 +171,29 @@ with st.sidebar:
 # Main content
 # -----------------------------
 # Fixed top app name
-st.markdown(
-    """
-    <div style='position:fixed; top:0; width:100%; background-color:#f8f9fa; 
-                text-align:center; font-size:24px; font-weight:bold; color:#2c3e50; 
-                padding:10px 0; z-index:1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1);'>
-        🇸🇿 Eswatini AgriVision Hub🌾 
+st.markdown("""
+    <style>
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ffffff;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            z-index: 9999;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .main-content {
+            margin-top: 60px; /* same height as header to avoid overlap */
+        }
+    </style>
+    <div class="fixed-header">
+        🇸🇿 Eswatini AgriVision Hub 🌾
     </div>
-    <div style='height:60px;'></div> <!-- spacer so content doesn't hide behind fixed header -->
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
 # Variable-specific forecast header
 st.markdown(f'<h2 class="main-header">📈 {selected_variable} Forecast</h2>', unsafe_allow_html=True)
