@@ -33,13 +33,13 @@ st.markdown("""
 # Forecast values
 # -----------------------------
 forecast_values = {
-    'Tomato SZL/1kg': 13,
     'Potatoes SZL/50kg': 82,
-    'Maize SZL/50kg': 290,
-    'Sugar SZL/1kg': 18,
     'Beans SZL/1kg': 41,
     'Onion SZL/1kg': 9,
     'Diesel SZL/1 liter': 22,
+    'Tomato SZL/1kg': 13,
+    'Maize SZL/50kg': 290,
+    'Sugar SZL/1kg': 18,
     'Cabbage SZL/Head': 15,
     'Gas SZL/1 liter': 19,
     'Inflation rate': 4.8,
