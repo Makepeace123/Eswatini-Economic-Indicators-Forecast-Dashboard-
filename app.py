@@ -324,6 +324,17 @@ with tab3:
         st.plotly_chart(fig_comp, use_container_width=True)
 
 with tab4:
+    # -----------------------------
+    # Allowed/relevant features for insights
+    # -----------------------------
+    relevant_features = [
+        'Tomato SZL/1kg', 'Onion SZL/1kg', 'Rice SZL/1kg', 'Gas SZL/1 liter', 
+        'Beans SZL/1kg', 'Cabbage SZL/Head', 'Diesel SZL/1 liter', 'Maize SZL/50kg', 
+        'Brown Bread SZL', 'Sugar SZL/1kg', 'Potatoes SZL/50kg', 'Maize meal SZL/1kg',
+        'Money supply SZL', 'GDP by economic activity (Current Prices)', 'Interest Rate (Prime lending rate)',
+        'All Items CPI', 'Inflation rate', 'GDP Growth', 'Crop production index (2014-2016 = 100)',
+        'Electricity'
+    ]
     st.markdown("### Strategic Insights & Recommendations")
     change = ((forecast_value - current_value)/current_value)*100
     col1, col2 = st.columns(2)
