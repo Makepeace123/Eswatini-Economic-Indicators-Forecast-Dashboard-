@@ -349,10 +349,15 @@ with tab3:
     st.plotly_chart(fig_corr, use_container_width=True)
     
     # Multi-variable trend comparison
+    options = [v for v in df.columns if v != selected_variable and v != 'date']
+
+    # filter defaults so they exist in options
+    default_values = [v for v in ['Diesel SZL/1 liter', 'Inflation rate'] if v in options]
+
     compare_vars = st.multiselect(
         "Compare with:",
-        options=[v for v in df.columns if v != selected_variable and v != 'date'],
-        default=['Diesel SZL/1 liter', 'Inflation rate']
+         options=options,
+         default=default_values
     )
     
     if compare_vars:
