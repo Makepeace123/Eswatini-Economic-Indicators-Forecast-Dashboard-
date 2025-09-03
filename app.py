@@ -75,8 +75,8 @@ def generate_sample_data():
         'date': dates,
         'Maize meal SZL/1kg': np.linspace(8, 25, n_days) + np.random.normal(0, 1, n_days),
         'All Items CPI': np.linspace(100, 145, n_days) + np.random.normal(0, 1, n_days),
-        #'Inflation rate': np.random.normal(0.2, 0.1, n_days).cumsum() + 5,
-        #'Diesel SZL/1 liter': np.linspace(12, 28, n_days) + np.random.normal(0, 1.5, n_days),
+        'Inflation rate': np.random.normal(0.2, 0.1, n_days).cumsum() + 5,
+        'Diesel SZL/1 liter': np.linspace(12, 28, n_days) + np.random.normal(0, 1.5, n_days),
         'Cabbage SZL/Head': np.linspace(5, 15, n_days) + np.random.normal(0, 2, n_days),
         'Tomato (Round) SZL/1kg': np.linspace(10, 30, n_days) + np.random.normal(0, 3, n_days),
         'Rice SZL/1kg': np.linspace(15, 25, n_days) + np.random.normal(0, 1, n_days),
@@ -436,7 +436,7 @@ with tab4:
 st.markdown("---")
 st.markdown("""
 <div style='text-align: center'>
-    <p>🇸🇿 <b>Eswatini Economic Forecasting System</b> | Powered by Machine Learning | INDABA X 2025</p>
+    <p>🇸🇿 <b>Eswatini Economic Forecasting System</b> | Powered by Machine Learning </p>
     <p><small>Data updated: {}</small></p>
 </div>
 """.format(datetime.now().strftime("%Y-%m-%d %H:%M")), unsafe_allow_html=True)
