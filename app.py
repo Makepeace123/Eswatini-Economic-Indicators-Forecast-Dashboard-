@@ -33,9 +33,9 @@ st.markdown("""
 # Forecast values
 # -----------------------------
 forecast_values = {
+    'Maize SZL/50kg': 290,
     'Cabbage SZL/Head': 15,
     'Tomato SZL/1kg': 13,
-    'Maize SZL/50kg': 290,
     'Potatoes SZL/50kg': 82,
     'Sugar SZL/1kg': 18,
     'Beans SZL/1kg': 41,
