@@ -291,7 +291,7 @@ with tab1:
     
     # Metrics table
     metrics_df = pd.DataFrame(metrics[selected_variable]).T
-    st.dataframe(metrics_df.style.format("{:.3f}").highlight_max(axis=0, color='#90EE90').highlight_min(axis=0, color='#FFCCCB'))
+    st.dataframe(metrics_df.style.format("{:.3f}"))#.highlight_max(axis=0, color='#90EE90').highlight_min(axis=0, color='#FFCCCB'))
     
     # Metrics visualization
     fig_metrics = go.Figure()
