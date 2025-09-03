@@ -1,366 +1,467 @@
 # -*- coding: utf-8 -*-
-"""Eswatini Economic Forecast Dashboard"""
+"""Eswatini Economic Forecast Dashboard - Streamlit Version"""
 
-import dash
-from dash import dcc, html, Input, Output, callback
+import streamlit as st
+import pandas as pd
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import pandas as pd
-import numpy as np
 import json
-import base64
-import os
 from datetime import datetime, timedelta
-import warnings
-warnings.filterwarnings('ignore')
+import matplotlib.pyplot as plt
+import seaborn as sns
+from PIL import Image
+import io
+import base64
 
-# Initialize the Dash App
-app = dash.Dash(__name__)
-app.title = "Eswatini Economic Forecast Dashboard"
+# Page configuration
+st.set_page_config(
+    page_title="Eswatini Economic Forecast",
+    page_icon="🇸🇿",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Sample data for demonstration (will be replaced with your actual data)
-def create_demo_data():
-    """Create demo time series data"""
+# Custom CSS
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 3rem;
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .metric-card {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        border-left: 4px solid #3498db;
+        margin-bottom: 1rem;
+    }
+    .forecast-card {
+        background-color: #ffffff;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    .positive-change {
+        color: #27ae60;
+        font-weight: bold;
+    }
+    .negative-change {
+        color: #e74c3c;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Initialize session state
+if 'current_variable' not in st.session_state:
+    st.session_state.current_variable = 'Maize meal SZL/1kg'
+
+# Sample data generation
+@st.cache_data
+def generate_sample_data():
+    """Generate comprehensive sample data for all 10 variables"""
     dates = pd.date_range(start='2020-01-01', end='2024-12-31', freq='D')
     n_days = len(dates)
     
-    # Create synthetic trends for demonstration
     np.random.seed(42)
-    base_trend = np.linspace(10, 50, n_days)
-    seasonal = 5 * np.sin(2 * np.pi * np.arange(n_days) / 365)
-    noise = np.random.normal(0, 2, n_days)
     
-    demo_data = {
+    # Base trends for each variable
+    data = {
         'date': dates,
-        'Maize_meal': base_trend + seasonal + noise,
-        'CPI': np.linspace(100, 145, n_days) + np.random.normal(0, 1, n_days),
-        'Diesel': np.linspace(15, 35, n_days) + np.random.normal(0, 1.5, n_days),
-        'Inflation': np.random.normal(5, 1, n_days).cumsum() / 10 + 2,
+        'Maize meal SZL/1kg': np.linspace(8, 25, n_days) + np.random.normal(0, 1, n_days),
+        'All Items CPI': np.linspace(100, 145, n_days) + np.random.normal(0, 1, n_days),
+        'Inflation rate': np.random.normal(0.2, 0.1, n_days).cumsum() + 5,
+        'Diesel SZL/1 liter': np.linspace(12, 28, n_days) + np.random.normal(0, 1.5, n_days),
+        'Cabbage SZL/Head': np.linspace(5, 15, n_days) + np.random.normal(0, 2, n_days),
+        'Tomato (Round) SZL/1kg': np.linspace(10, 30, n_days) + np.random.normal(0, 3, n_days),
+        'Rice SZL/1kg': np.linspace(15, 25, n_days) + np.random.normal(0, 1, n_days),
+        'Beans SZL/1kg': np.linspace(12, 22, n_days) + np.random.normal(0, 1.2, n_days),
+        'Sugar SZL/1kg': np.linspace(8, 18, n_days) + np.random.normal(0, 1, n_days),
+        'Interest Rate (Prime lending rate)': np.linspace(8, 12, n_days) + np.random.normal(0, 0.5, n_days)
     }
     
-    return pd.DataFrame(demo_data)
+    # Add seasonality and trends
+    for i in range(1, len(data)):
+        key = list(data.keys())[i]
+        seasonal = 3 * np.sin(2 * np.pi * np.arange(n_days) / 365)
+        data[key] += seasonal
+    
+    return pd.DataFrame(data)
 
-# Create demo artifacts for each variable
-def create_demo_artifacts():
-    """Create demo model artifacts"""
-    variables = ['Maize_meal', 'CPI', 'Diesel', 'Inflation']
-    features = ['Fuel_Price', 'Exchange_Rate', 'Rainfall', 'GDP_Growth', 'Import_Costs']
+@st.cache_data
+def generate_forecasts():
+    """Generate forecast data for all variables"""
+    forecasts = {}
+    variables = [
+        'Maize meal SZL/1kg', 'All Items CPI', 'Inflation rate', 'Diesel SZL/1 liter',
+        'Cabbage SZL/Head', 'Tomato (Round) SZL/1kg', 'Rice SZL/1kg', 'Beans SZL/1kg',
+        'Sugar SZL/1kg', 'Interest Rate (Prime lending rate)'
+    ]
+    
+    future_dates = [datetime.now().date() + timedelta(days=i) for i in range(1, 31)]
     
     for variable in variables:
-        os.makedirs(f'model_artifacts/{variable}', exist_ok=True)
-        
-        # Demo metrics
-        metrics = {
-            'xgb': {'MAE': np.random.uniform(0.5, 2.0), 'RMSE': np.random.uniform(0.8, 3.0), 'R2': np.random.uniform(0.85, 0.95)},
-            'mlp': {'MAE': np.random.uniform(0.6, 2.2), 'RMSE': np.random.uniform(1.0, 3.5), 'R2': np.random.uniform(0.8, 0.92)},
-            'gru': {'MAE': np.random.uniform(0.7, 2.5), 'RMSE': np.random.uniform(1.2, 4.0), 'R2': np.random.uniform(0.75, 0.9)}
-        }
-        
-        with open(f'model_artifacts/{variable}/metrics.json', 'w') as f:
-            json.dump(metrics, f, indent=4)
-        
-        # Demo forecast
-        future_dates = [datetime.now().date() + timedelta(days=i) for i in range(1, 31)]
-        current_value = np.random.uniform(20, 40)
-        trend = np.random.uniform(-0.2, 0.3, 30).cumsum()
-        forecast_values = current_value + trend
-        
-        forecast_df = pd.DataFrame({
+        current_value = np.random.uniform(15, 25)
+        trend = np.random.uniform(-0.3, 0.4, 30).cumsum()
+        forecasts[variable] = pd.DataFrame({
             'date': future_dates,
-            'forecast': forecast_values
+            'forecast': current_value + trend,
+            'upper_ci': current_value + trend * 1.15,
+            'lower_ci': current_value + trend * 0.85
         })
-        forecast_df.to_csv(f'model_artifacts/{variable}/forecast.csv', index=False)
-        
-        # Demo feature importance
-        feature_importance = {feature: np.random.uniform(0.1, 1.0) for feature in features}
-        with open(f'model_artifacts/{variable}/selected_features.json', 'w') as f:
-            json.dump(feature_importance, f, indent=4)
+    
+    return forecasts
 
-# Create demo data and artifacts
-df = create_demo_data()
-create_demo_artifacts()
+@st.cache_data
+def generate_metrics():
+    """Generate performance metrics for all models"""
+    metrics = {}
+    variables = [
+        'Maize meal SZL/1kg', 'All Items CPI', 'Inflation rate', 'Diesel SZL/1 liter',
+        'Cabbage SZL/Head', 'Tomato (Round) SZL/1kg', 'Rice SZL/1kg', 'Beans SZL/1kg',
+        'Sugar SZL/1kg', 'Interest Rate (Prime lending rate)'
+    ]
+    
+    for variable in variables:
+        metrics[variable] = {
+            'xgb': {
+                'MAE': round(np.random.uniform(0.8, 2.5), 3),
+                'RMSE': round(np.random.uniform(1.2, 3.8), 3),
+                'R2': round(np.random.uniform(0.82, 0.96), 3)
+            },
+            'mlp': {
+                'MAE': round(np.random.uniform(1.0, 3.0), 3),
+                'RMSE': round(np.random.uniform(1.5, 4.2), 3),
+                'R2': round(np.random.uniform(0.78, 0.92), 3)
+            },
+            'gru': {
+                'MAE': round(np.random.uniform(0.9, 2.8), 3),
+                'RMSE': round(np.random.uniform(1.4, 4.0), 3),
+                'R2': round(np.random.uniform(0.80, 0.94), 3)
+            }
+        }
+    
+    return metrics
 
-# Available variables for dropdown
-VARIABLE_OPTIONS = [
-    {'label': 'Maize Meal (SZL/kg)', 'value': 'Maize_meal'},
-    {'label': 'Consumer Price Index', 'value': 'CPI'},
-    {'label': 'Diesel Price (SZL/liter)', 'value': 'Diesel'},
-    {'label': 'Inflation Rate (%)', 'value': 'Inflation'}
-]
+@st.cache_data
+def generate_feature_importance():
+    """Generate feature importance data"""
+    features = [
+        'Diesel Price', 'Exchange Rate', 'Rainfall', 'GDP Growth', 'Import Costs',
+        'Fuel Prices', 'Transport Costs', 'Seasonal Factor', 'Global Prices', 'Local Production'
+    ]
+    
+    importance = {}
+    for variable in [
+        'Maize meal SZL/1kg', 'All Items CPI', 'Inflation rate', 'Diesel SZL/1 liter',
+        'Cabbage SZL/Head', 'Tomato (Round) SZL/1kg', 'Rice SZL/1kg', 'Beans SZL/1kg',
+        'Sugar SZL/1kg', 'Interest Rate (Prime lending rate)'
+    ]:
+        np.random.seed(hash(variable) % 1000)
+        imp_values = {feature: round(np.random.uniform(0.1, 1.0), 3) for feature in features}
+        # Sort by importance
+        importance[variable] = dict(sorted(imp_values.items(), key=lambda x: x[1], reverse=True))
+    
+    return importance
 
-# App Layout
-app.layout = html.Div([
-    # Header
-    html.Div([
-        html.H1("🇸🇿 Eswatini Economic Forecast Dashboard", 
-                style={'textAlign': 'center', 'color': 'white', 'marginBottom': '20px'}),
-        html.P("Real-time forecasting of key economic indicators for strategic decision-making",
-              style={'textAlign': 'center', 'color': 'white', 'fontSize': '16px'})
-    ], style={'backgroundColor': '#2c3e50', 'padding': '20px', 'borderRadius': '10px'}),
-    
-    html.Br(),
-    
-    # Main content
-    html.Div([
-        # Left panel - Controls
-        html.Div([
-            html.H3("📊 Control Panel", style={'color': '#2c3e50'}),
-            html.Hr(),
-            
-            html.Label("Select Economic Indicator:"),
-            dcc.Dropdown(
-                id='variable-selector',
-                options=VARIABLE_OPTIONS,
-                value='Maize_meal',
-                clearable=False,
-                style={'marginBottom': '20px'}
-            ),
-            
-            html.Label("Forecast Horizon:"),
-            dcc.Slider(
-                id='forecast-horizon',
-                min=7,
-                max=90,
-                step=7,
-                value=30,
-                marks={7: '1W', 30: '1M', 60: '2M', 90: '3M'},
-                style={'marginBottom': '20px'}
-            ),
-            
-            html.Label("Confidence Interval:"),
-            dcc.Slider(
-                id='confidence-level',
-                min=80,
-                max=95,
-                step=5,
-                value=90,
-                marks={80: '80%', 85: '85%', 90: '90%', 95: '95%'},
-                style={'marginBottom': '20px'}
-            ),
-            
-            html.Button('🔄 Update Forecast', id='update-button', n_clicks=0,
-                       style={'width': '100%', 'padding': '10px', 'backgroundColor': '#27ae60', 
-                              'color': 'white', 'border': 'none', 'borderRadius': '5px',
-                              'cursor': 'pointer'}),
-            
-            html.Hr(),
-            
-            # Key Metrics Display
-            html.Div(id='key-metrics', style={'padding': '10px', 'backgroundColor': '#f8f9fa', 
-                                            'borderRadius': '5px', 'marginTop': '20px'})
-            
-        ], style={'width': '25%', 'padding': '20px', 'backgroundColor': 'white', 
-                 'borderRadius': '10px', 'boxShadow': '0 4px 6px rgba(0,0,0,0.1)'}),
-        
-        # Right panel - Visualizations
-        html.Div([
-            # Forecast Plot
-            dcc.Graph(id='forecast-plot', style={'height': '400px', 'marginBottom': '20px'}),
-            
-            # Tabs for additional information
-            dcc.Tabs([
-                # Model Performance Tab
-                dcc.Tab(label='📈 Model Performance', children=[
-                    html.Div([
-                        html.H4("Model Evaluation Metrics"),
-                        html.Div(id='metrics-table', style={'marginBottom': '20px'}),
-                        
-                        html.H4("Actual vs Predicted Values"),
-                        dcc.Graph(id='actual-vs-predicted-plot')
-                    ], style={'padding': '20px'})
-                ]),
-                
-                # Feature Importance Tab
-                dcc.Tab(label='🔍 Feature Importance', children=[
-                    html.Div([
-                        html.H4("Top Influencing Factors"),
-                        dcc.Graph(id='feature-importance-plot'),
-                        
-                        html.H4("How Features Affect the Forecast"),
-                        html.Div(id='shap-explanation')
-                    ], style={'padding': '20px'})
-                ]),
-                
-                # Data Insights Tab
-                dcc.Tab(label='📋 Data Insights', children=[
-                    html.Div([
-                        html.H4("Historical Trends"),
-                        dcc.Graph(id='historical-trends-plot'),
-                        
-                        html.H4("Correlation Heatmap"),
-                        dcc.Graph(id='correlation-heatmap')
-                    ], style={'padding': '20px'})
-                ])
-            ])
-        ], style={'width': '75%', 'padding': '0 20px'})
-    ], style={'display': 'flex', 'gap': '20px'})
-], style={'padding': '20px', 'backgroundColor': '#ecf0f1', 'minHeight': '100vh'})
+# Load data
+df = generate_sample_data()
+forecasts = generate_forecasts()
+metrics = generate_metrics()
+feature_importance = generate_feature_importance()
 
-# Callbacks for interactive components
-@callback(
-    [Output('forecast-plot', 'figure'),
-     Output('key-metrics', 'children'),
-     Output('metrics-table', 'children'),
-     Output('feature-importance-plot', 'figure'),
-     Output('actual-vs-predicted-plot', 'figure'),
-     Output('historical-trends-plot', 'figure'),
-     Output('correlation-heatmap', 'figure'),
-     Output('shap-explanation', 'children')],
-    [Input('variable-selector', 'value'),
-     Input('update-button', 'n_clicks')],
-    prevent_initial_call=False
-)
-def update_dashboard(selected_variable, n_clicks):
-    """Update all dashboard components based on selected variable"""
+# Sidebar
+with st.sidebar:
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Flag_of_Eswatini.svg/1200px-Flag_of_Eswatini.svg.png", 
+             width=100)
+    st.title("🇸🇿 Eswatini Economic Forecast")
+    st.markdown("---")
     
-    # Filter data for selected variable
-    variable_data = df[['date', selected_variable]].copy()
-    variable_data = variable_data.rename(columns={selected_variable: 'value'})
-    
-    # Load forecast data (in real app, this would come from your model artifacts)
-    try:
-        forecast_df = pd.read_csv(f'model_artifacts/{selected_variable}/forecast.csv', parse_dates=['date'])
-        with open(f'model_artifacts/{selected_variable}/metrics.json', 'r') as f:
-            metrics = json.load(f)
-        with open(f'model_artifacts/{selected_variable}/selected_features.json', 'r') as f:
-            feature_importance = json.load(f)
-    except:
-        # Fallback to demo data if files don't exist
-        forecast_df = pd.DataFrame({
-            'date': [datetime.now().date() + timedelta(days=i) for i in range(1, 31)],
-            'forecast': variable_data['value'].iloc[-1] + np.random.normal(0, 2, 30).cumsum()
-        })
-        metrics = {'xgb': {'MAE': 1.2, 'RMSE': 1.8, 'R2': 0.89}}
-        feature_importance = {'Feature1': 0.8, 'Feature2': 0.6, 'Feature3': 0.4, 'Feature4': 0.3}
-    
-    # 1. Forecast Plot
-    fig_forecast = go.Figure()
-    
-    # Historical data
-    fig_forecast.add_trace(go.Scatter(
-        x=variable_data['date'],
-        y=variable_data['value'],
-        mode='lines',
-        name='Historical',
-        line=dict(color='#3498db', width=2),
-        hovertemplate='Date: %{x}<br>Value: %{y:.2f}<extra></extra>'
-    ))
-    
-    # Forecast data
-    fig_forecast.add_trace(go.Scatter(
-        x=forecast_df['date'],
-        y=forecast_df['forecast'],
-        mode='lines',
-        name='Forecast',
-        line=dict(color='#e74c3c', width=2, dash='dash'),
-        hovertemplate='Date: %{x}<br>Forecast: %{y:.2f}<extra></extra>'
-    ))
-    
-    # Confidence interval (simulated)
-    upper_bound = forecast_df['forecast'] * 1.1
-    lower_bound = forecast_df['forecast'] * 0.9
-    
-    fig_forecast.add_trace(go.Scatter(
-        x=forecast_df['date'].tolist() + forecast_df['date'].tolist()[::-1],
-        y=upper_bound.tolist() + lower_bound.tolist()[::-1],
-        fill='toself',
-        fillcolor='rgba(231, 76, 60, 0.2)',
-        line=dict(color='rgba(255,255,255,0)'),
-        name='90% Confidence',
-        hoverinfo='skip'
-    ))
-    
-    fig_forecast.update_layout(
-        title=f'{selected_variable.replace("_", " ").title()} - 30-Day Forecast',
-        xaxis_title='Date',
-        yaxis_title='Value',
-        hovermode='x unified',
-        showlegend=True,
-        plot_bgcolor='white',
-        paper_bgcolor='white'
+    # Variable selection
+    selected_variable = st.selectbox(
+        "**Select Economic Indicator:**",
+        options=[
+            'Maize meal SZL/1kg', 'All Items CPI', 'Inflation rate', 'Diesel SZL/1 liter',
+            'Cabbage SZL/Head', 'Tomato (Round) SZL/1kg', 'Rice SZL/1kg', 'Beans SZL/1kg',
+            'Sugar SZL/1kg', 'Interest Rate (Prime lending rate)'
+        ],
+        index=0
     )
     
-    # 2. Key Metrics
-    current_value = variable_data['value'].iloc[-1]
-    forecast_value = forecast_df['forecast'].iloc[0]
-    change_pct = ((forecast_value - current_value) / current_value) * 100
+    st.session_state.current_variable = selected_variable
     
-    metrics_display = html.Div([
-        html.H4("📊 Current Metrics"),
-        html.P(f"Current Value: {current_value:.2f}"),
-        html.P(f"Next Forecast: {forecast_value:.2f}"),
-        html.P(f"Change: {change_pct:+.1f}%", 
-               style={'color': 'green' if change_pct >= 0 else 'red'}),
-        html.P(f"Best Model: XGBoost (MAE: {metrics.get('xgb', {}).get('MAE', 'N/A'):.2f})")
-    ])
+    # Forecast parameters
+    st.markdown("---")
+    st.subheader("Forecast Settings")
+    forecast_days = st.slider("Forecast Horizon (days):", 7, 90, 30, 7)
+    confidence_level = st.slider("Confidence Level:", 80, 95, 90, 5)
     
-    # 3. Metrics Table
-    metrics_table = html.Table([
-        html.Thead(html.Tr([html.Th('Model'), html.Th('MAE'), html.Th('RMSE'), html.Th('R²')])),
-        html.Tbody([
-            html.Tr([html.Td('XGBoost'), html.Td(f"{metrics.get('xgb', {}).get('MAE', 'N/A'):.3f}"), 
-                    html.Td(f"{metrics.get('xgb', {}).get('RMSE', 'N/A'):.3f}"), 
-                    html.Td(f"{metrics.get('xgb', {}).get('R2', 'N/A'):.3f}")]),
-            html.Tr([html.Td('MLP'), html.Td(f"{metrics.get('mlp', {}).get('MAE', 'N/A'):.3f}"), 
-                    html.Td(f"{metrics.get('mlp', {}).get('RMSE', 'N/A'):.3f}"), 
-                    html.Td(f"{metrics.get('mlp', {}).get('R2', 'N/A'):.3f}")]),
-            html.Tr([html.Td('GRU'), html.Td(f"{metrics.get('gru', {}).get('MAE', 'N/A'):.3f}"), 
-                    html.Td(f"{metrics.get('gru', {}).get('RMSE', 'N/A'):.3f}"), 
-                    html.Td(f"{metrics.get('gru', {}).get('R2', 'N/A'):.3f}")])
-        ])
-    ], style={'width': '100%', 'borderCollapse': 'collapse'})
-    
-    # 4. Feature Importance Plot
-    features_df = pd.DataFrame({
-        'feature': list(feature_importance.keys()),
-        'importance': list(feature_importance.values())
-    }).sort_values('importance', ascending=True)
-    
-    fig_features = px.bar(features_df, y='feature', x='importance', orientation='h',
-                         title='Feature Importance Ranking')
-    fig_features.update_layout(showlegend=False, plot_bgcolor='white', paper_bgcolor='white')
-    
-    # 5. Actual vs Predicted Plot (simulated)
-    actual_vs_predicted = pd.DataFrame({
-        'date': variable_data['date'].iloc[-100:],
-        'actual': variable_data['value'].iloc[-100:],
-        'predicted': variable_data['value'].iloc[-100:] + np.random.normal(0, 1, 100)
-    })
-    
-    fig_actual_pred = go.Figure()
-    fig_actual_pred.add_trace(go.Scatter(x=actual_vs_predicted['date'], y=actual_vs_predicted['actual'],
-                                        name='Actual', line=dict(color='blue')))
-    fig_actual_pred.add_trace(go.Scatter(x=actual_vs_predicted['date'], y=actual_vs_predicted['predicted'],
-                                        name='Predicted', line=dict(color='red', dash='dash')))
-    fig_actual_pred.update_layout(title='Actual vs Predicted Values', plot_bgcolor='white', paper_bgcolor='white')
-    
-    # 6. Historical Trends
-    fig_trends = px.line(variable_data, x='date', y='value', 
-                        title=f'{selected_variable} Historical Trend')
-    fig_trends.update_layout(plot_bgcolor='white', paper_bgcolor='white')
-    
-    # 7. Correlation Heatmap (simulated with multiple variables)
-    corr_data = df[['Maize_meal', 'CPI', 'Diesel', 'Inflation']].corr()
-    fig_heatmap = px.imshow(corr_data, text_auto=True, aspect="auto",
-                           title='Correlation Between Economic Indicators')
-    fig_heatmap.update_layout(plot_bgcolor='white', paper_bgcolor='white')
-    
-    # 8. SHAP Explanation
-    shap_explanation = html.Div([
-        html.H5("How features influence the current forecast:"),
-        html.Ul([
-            html.Li("📈 Diesel prices: +2.3 units (increasing forecast)"),
-            html.Li("📉 Exchange rate: -1.8 units (decreasing forecast)"),
-            html.Li("📈 Import costs: +1.5 units (increasing forecast)"),
-            html.Li("📉 Rainfall: -0.9 units (decreasing forecast)")
-        ]),
-        html.P("The forecast is most sensitive to changes in diesel prices and exchange rates.")
-    ])
-    
-    return (fig_forecast, metrics_display, metrics_table, fig_features, 
-            fig_actual_pred, fig_trends, fig_heatmap, shap_explanation)
+    st.markdown("---")
+    st.info("""
+    **Dashboard Features:**
+    - Real-time economic forecasts
+    - Multi-model performance comparison
+    - Feature importance analysis
+    - Interactive visualizations
+    - Downloadable reports
+    """)
 
-# Run the app
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8050)
+# Main content
+st.markdown(f'<h1 class="main-header">📈 {selected_variable} Forecast</h1>', unsafe_allow_html=True)
+
+# Key metrics row
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    current_value = df[selected_variable].iloc[-1]
+    st.metric("Current Value", f"{current_value:.2f}")
+
+with col2:
+    forecast_value = forecasts[selected_variable]['forecast'].iloc[0]
+    change_pct = ((forecast_value - current_value) / current_value) * 100
+    change_color = "positive-change" if change_pct >= 0 else "negative-change"
+    st.metric("Next Forecast", f"{forecast_value:.2f}", f"{change_pct:+.1f}%")
+
+with col3:
+    best_model = 'xgb'  # Simplified - would compare metrics in real app
+    st.metric("Best Model", "XGBoost", f"MAE: {metrics[selected_variable][best_model]['MAE']:.2f}")
+
+with col4:
+    volatility = df[selected_variable].pct_change().std() * 100
+    st.metric("Volatility", f"{volatility:.1f}%", "30-day average")
+
+# Main forecast plot
+st.markdown("### 📊 Forecast Visualization")
+fig = go.Figure()
+
+# Historical data
+fig.add_trace(go.Scatter(
+    x=df['date'],
+    y=df[selected_variable],
+    mode='lines',
+    name='Historical',
+    line=dict(color='#3498db', width=3),
+    hovertemplate='<b>Date:</b> %{x}<br><b>Value:</b> %{y:.2f}<extra></extra>'
+))
+
+# Forecast data
+forecast_data = forecasts[selected_variable]
+fig.add_trace(go.Scatter(
+    x=forecast_data['date'],
+    y=forecast_data['forecast'],
+    mode='lines',
+    name='Forecast',
+    line=dict(color='#e74c3c', width=3, dash='dash'),
+    hovertemplate='<b>Date:</b> %{x}<br><b>Forecast:</b> %{y:.2f}<extra></extra>'
+))
+
+# Confidence interval
+fig.add_trace(go.Scatter(
+    x=forecast_data['date'].tolist() + forecast_data['date'].tolist()[::-1],
+    y=forecast_data['upper_ci'].tolist() + forecast_data['lower_ci'].tolist()[::-1],
+    fill='toself',
+    fillcolor='rgba(231, 76, 60, 0.2)',
+    line=dict(color='rgba(255,255,255,0)'),
+    name=f'{confidence_level}% Confidence',
+    hoverinfo='skip'
+))
+
+fig.update_layout(
+    height=500,
+    showlegend=True,
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    xaxis_title='Date',
+    yaxis_title='Value',
+    hovermode='x unified'
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# Tabs for additional information
+tab1, tab2, tab3, tab4 = st.tabs(["📋 Model Performance", "🔍 Feature Analysis", "📈 Comparative View", "💡 Insights"])
+
+with tab1:
+    st.markdown("### Model Performance Comparison")
+    
+    # Metrics table
+    metrics_df = pd.DataFrame(metrics[selected_variable]).T
+    st.dataframe(metrics_df.style.format("{:.3f}").highlight_max(axis=0, color='#90EE90').highlight_min(axis=0, color='#FFCCCB'))
+    
+    # Metrics visualization
+    fig_metrics = go.Figure()
+    models = ['xgb', 'mlp', 'gru']
+    
+    for metric in ['MAE', 'RMSE']:
+        fig_metrics.add_trace(go.Bar(
+            name=metric,
+            x=models,
+            y=[metrics[selected_variable][model][metric] for model in models],
+            text=[f'{metrics[selected_variable][model][metric]:.3f}' for model in models],
+            textposition='auto',
+        ))
+    
+    fig_metrics.update_layout(barmode='group', title='Model Error Metrics (Lower is Better)')
+    st.plotly_chart(fig_metrics, use_container_width=True)
+
+with tab2:
+    st.markdown("### Feature Importance Analysis")
+    
+    # Feature importance bar chart
+    features = list(feature_importance[selected_variable].keys())[:10]
+    importance_values = list(feature_importance[selected_variable].values())[:10]
+    
+    fig_features = px.bar(
+        x=importance_values,
+        y=features,
+        orientation='h',
+        title='Top Influencing Factors',
+        labels={'x': 'Importance Score', 'y': 'Features'}
+    )
+    fig_features.update_layout(showlegend=False)
+    st.plotly_chart(fig_features, use_container_width=True)
+    
+    # SHAP explanation
+    st.markdown("#### How Features Influence Forecast")
+    top_features = list(feature_importance[selected_variable].items())[:5]
+    
+    for feature, importance in top_features:
+        effect = "increases" if np.random.random() > 0.3 else "decreases"
+        magnitude = f"{importance * 10:.1f}%"
+        st.write(f"• **{feature}**: {effect} forecast by ~{magnitude}")
+
+with tab3:
+    st.markdown("### Comparative Economic Indicators")
+    
+    # Correlation heatmap
+    corr_matrix = df.drop(columns=['date']).corr()
+    fig_corr = px.imshow(
+        corr_matrix,
+        text_auto=True,
+        aspect="auto",
+        title='Correlation Between Economic Indicators'
+    )
+    st.plotly_chart(fig_corr, use_container_width=True)
+    
+    # Multi-variable trend comparison
+    compare_vars = st.multiselect(
+        "Compare with:",
+        options=[v for v in df.columns if v != selected_variable and v != 'date'],
+        default=['Diesel SZL/1 liter', 'Inflation rate']
+    )
+    
+    if compare_vars:
+        fig_compare = go.Figure()
+        fig_compare.add_trace(go.Scatter(
+            x=df['date'], y=df[selected_variable], name=selected_variable, line=dict(width=3)
+        ))
+        
+        for var in compare_vars:
+            # Normalize for comparison
+            normalized = (df[var] - df[var].mean()) / df[var].std()
+            fig_compare.add_trace(go.Scatter(
+                x=df['date'], y=normalized, name=var, line=dict(dash='dot')
+            ))
+        
+        fig_compare.update_layout(title='Normalized Comparison with Other Indicators')
+        st.plotly_chart(fig_compare, use_container_width=True)
+
+with tab4:
+    st.markdown("### Strategic Insights & Recommendations")
+    
+    # Generate insights based on forecast
+    current = df[selected_variable].iloc[-1]
+    forecast = forecasts[selected_variable]['forecast'].iloc[0]
+    change = ((forecast - current) / current) * 100
+    
+    col_insight1, col_insight2 = st.columns(2)
+    
+    with col_insight1:
+        st.markdown("#### 📊 Trend Analysis")
+        if change > 5:
+            st.error("**Warning**: Significant price increase expected")
+            st.write("Consider strategic reserves or import planning")
+        elif change < -5:
+            st.success("**Opportunity**: Price decrease expected")
+            st.write("Good time for procurement or inventory building")
+        else:
+            st.info("**Stable**: Moderate changes expected")
+            st.write("Maintain current strategy with close monitoring")
+    
+    with col_insight2:
+        st.markdown("#### ⚡ Key Drivers")
+        top_driver = list(feature_importance[selected_variable].keys())[0]
+        st.write(f"**Primary driver**: {top_driver}")
+        st.write(f"**Volatility**: {volatility:.1f}% (30-day average)")
+        st.write(f"**Forecast confidence**: {confidence_level}%")
+    
+    # Actionable recommendations
+    st.markdown("#### 🎯 Recommended Actions")
+    
+    if "Maize" in selected_variable or "Rice" in selected_variable:
+        st.write("""
+        - Monitor grain reserves levels
+        - Coordinate with agricultural ministry
+        - Consider import/export adjustments
+        - Update social welfare program calculations
+        """)
+    elif "Diesel" in selected_variable or "Fuel" in selected_variable:
+        st.write("""
+        - Review transportation cost projections
+        - Assess impact on supply chain
+        - Consider fuel subsidy adjustments
+        - Monitor global oil price trends
+        """)
+    elif "Inflation" in selected_variable or "CPI" in selected_variable:
+        st.write("""
+        - Prepare monetary policy review
+        - Update inflation targeting framework
+        - Coordinate with central bank
+        - Assess impact on interest rates
+        """)
+    else:
+        st.write("""
+        - Monitor market trends closely
+        - Coordinate with relevant ministry
+        - Prepare contingency plans
+        - Update budget projections
+        """)
+
+# Footer
+st.markdown("---")
+st.markdown("""
+<div style='text-align: center'>
+    <p>🇸🇿 <b>Eswatini Economic Forecasting System</b> | Powered by Machine Learning | INDABA X 2025</p>
+    <p><small>Data updated: {}</small></p>
+</div>
+""".format(datetime.now().strftime("%Y-%m-%d %H:%M")), unsafe_allow_html=True)
+
+# Download section
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 📥 Export Data")
+
+if st.sidebar.button("Download Current Forecast Report"):
+    # Create a simple report
+    report_data = {
+        'Variable': [selected_variable],
+        'Current Value': [current_value],
+        '30-Day Forecast': [forecast_value],
+        'Change %': [change_pct],
+        'Best Model': ['XGBoost'],
+        'Model MAE': [metrics[selected_variable]['xgb']['MAE']]
+    }
+    
+    report_df = pd.DataFrame(report_data)
+    csv = report_df.to_csv(index=False)
+    
+    st.sidebar.download_button(
+        label="Download CSV Report",
+        data=csv,
+        file_name=f"eswatini_forecast_{selected_variable.replace(' ', '_')}.csv",
+        mime="text/csv"
+    )
