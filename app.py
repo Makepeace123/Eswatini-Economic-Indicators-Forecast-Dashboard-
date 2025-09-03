@@ -148,7 +148,7 @@ feature_importance = generate_feature_importance()
 # -----------------------------
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Flag_of_Eswatini.svg/1200px-Flag_of_Eswatini.svg.png", width=100)
-    st.title("🌱 Eswatini Agriculture Forecast")
+    st.title("🌱 Eswatini Agriculture Forecast Hub")
     st.markdown("---")
     
     selected_variable = st.selectbox("Select Variable:", list(forecast_values.keys()))
@@ -170,8 +170,14 @@ with st.sidebar:
 # -----------------------------
 # Main content
 # -----------------------------
-st.markdown(f'<h1 class="main-header">📈 {selected_variable} Forecast</h1>', unsafe_allow_html=True)
+# App name at the top
+st.markdown(
+    "<h1 style='text-align:center; font-size:2.5rem; color:#2c3e50;'>🌱 Eswatini AgriVision Hub</h1>",
+    unsafe_allow_html=True
+)
 
+# Variable-specific forecast header
+st.markdown(f'<h2 class="main-header">📈 {selected_variable} Forecast</h2>', unsafe_allow_html=True)
 
 st.markdown(
     """
