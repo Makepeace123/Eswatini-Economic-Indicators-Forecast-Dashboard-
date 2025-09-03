@@ -158,10 +158,10 @@ st.markdown(f'<h1 class="main-header">📈 {selected_variable} Forecast</h1>', u
 #    st.metric("Current Value", f"{current_value:.2f}")
 
 #with col2:
-#    forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]
-#    change_pct = ((forecast_value - current_value) / current_value) * 100
-#    change_color = "positive-change" if change_pct >= 0 else "negative-change"
-#    st.metric("Next Forecast", f"{forecast_value:.2f}", f"{change_pct:+.1f}%")
+    forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]
+    change_pct = ((forecast_value - current_value) / current_value) * 100
+    change_color = "positive-change" if change_pct >= 0 else "negative-change"
+    st.metric("Next Forecast", f"{forecast_value:.2f}", f"{change_pct:+.1f}%")
 
 #with col3:
 #    best_model = 'xgb'  # Simplified selection
