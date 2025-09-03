@@ -223,6 +223,25 @@ st.markdown(
 st.markdown("### 📊 30-Day Forecast Table")
 st.dataframe(forecasts_table[selected_variable])
 
+
+allowed_variables = [
+    'Tomato (Round) SZL/1kg','Onion SZL/1kg','Rice SZL/1kg','Gas SZL/1 liter','Beans SZL/1kg',
+    'Cabbage SZL/Head','Diesel SZL/1 liter','Maize SZL/50kg','Brown Bread SZL','Sugar SZL/1kg',
+    'Potatoes SZL/50kg','Maize meal SZL/1kg','Money supply SZL','GDP by economic activity (Current Prices)',
+    'Interest Rate (Prime lending rate)','All Items CPI','Inflation rate','GDP Growth','CABA_GDP',
+    'Electricity','SA_Inflation','SA_GDP_Growth','SACU_Rev (GDP)','Net migration',
+    'Access to clean fuels and technologies for cooking (% of population)','Access to electricity (% of population)',
+    'Crop production index (2014-2016 = 100)','Food production index (2014-2016 = 100)','Mobile cellular subscriptions',
+    'Permanent cropland (% of land area)','Renewable internal freshwater resources per capita (cubic meters)',
+    'Water productivity, total (constant 2015 US$ GDP per cubic meter of total freshwater withdrawal)',
+    'Crop production index (2014-2016 = 100)(South Africa)','Food production index (2014-2016 = 100)(South Africa)',
+    'Level of water stress: freshwater withdrawal as a proportion of available freshwater resources',
+    'Population, total','Agricultural land (% of land area)',
+    'Employment in agriculture (% of total employment) (modeled ILO estimate)',
+    'Fertilizer consumption (kilograms per hectare of arable land)','Season'
+]
+
+
 # -----------------------------
 # Tabs for additional info
 # -----------------------------
@@ -295,7 +314,9 @@ with tab4:
             st.info("**Stable**: Moderate changes expected")
     with col2:
         st.markdown("#### ⚡ Key Drivers")
-        top_driver = list(feature_importance[selected_variable].keys())[0]
+        # Select top driver from allowed variables only
+        top_driver_candidates = [f for f in feature_importance[selected_variable].keys() if f in allowed_variables]
+        top_driver = top_driver_candidates[0] if top_driver_candidates else list(feature_importance[selected_variable].keys())[0]
         st.write(f"**Primary driver**: {top_driver}")
         st.write(f"**Volatility**: {volatility:.1f}%")
     
