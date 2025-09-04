@@ -289,7 +289,7 @@ allowed_variables = [
 # -----------------------------
 # Tabs for additional info
 # -----------------------------
-tab1, tab2, tab3, tab4 = st.tabs(["📋 Model Performance", "🔍 Feature Analysis", "📈 Comparative View", "💡 Insights"])
+tab1, tab2, tab3 = st.tabs(["📋 Model Performance", "🔍 Feature Analysis", "💡 Insights"])
 
 with tab1:
     st.markdown("### Model Performance Comparison")
@@ -321,30 +321,30 @@ with tab2:
         effect = "increases" if np.random.rand()>0.3 else "decreases"
         st.write(f"• **{f}**: {effect} forecast by ~{v*10:.1f}%")
 
-with tab3:
-    st.markdown("### Comparative Indicators")
-    corr_matrix = df.drop(columns=['date']).corr()
-    fig_corr = px.imshow(corr_matrix, text_auto=True, aspect="auto", title='Correlation Matrix')
-    st.plotly_chart(fig_corr, use_container_width=True)
+#with tab3:
+#    st.markdown("### Comparative Indicators")
+#    corr_matrix = df.drop(columns=['date']).corr()
+#    fig_corr = px.imshow(corr_matrix, text_auto=True, aspect="auto", title='Correlation Matrix')
+#    st.plotly_chart(fig_corr, use_container_width=True)
     
-    options = [v for v in df.columns if v != selected_variable and v != 'date']
-    valid_defaults = [v for v in ['Diesel SZL/1 liter', 'Inflation rate'] if v in options]
+#    options = [v for v in df.columns if v != selected_variable and v != 'date']
+#    valid_defaults = [v for v in ['Diesel SZL/1 liter', 'Inflation rate'] if v in options]
 
-    compare_vars = st.multiselect(
-        "Compare with:",
-        options,
-        default=valid_defaults
-    )
-    if compare_vars:
-        fig_comp = go.Figure()
-        fig_comp.add_trace(go.Scatter(x=df['date'], y=df[selected_variable], name=selected_variable, line=dict(width=3)))
-        for var in compare_vars:
-            normalized = (df[var]-df[var].mean())/df[var].std()
-            fig_comp.add_trace(go.Scatter(x=df['date'], y=normalized, name=var, line=dict(dash='dot')))
-        fig_comp.update_layout(title='Normalized Comparison')
-        st.plotly_chart(fig_comp, use_container_width=True)
+#    compare_vars = st.multiselect(
+#        "Compare with:",
+#        options,
+#        default=valid_defaults
+#    )
+#    if compare_vars:
+#        fig_comp = go.Figure()
+#        fig_comp.add_trace(go.Scatter(x=df['date'], y=df[selected_variable], name=selected_variable, line=dict(width=3)))
+#        for var in compare_vars:
+#            normalized = (df[var]-df[var].mean())/df[var].std()
+#            fig_comp.add_trace(go.Scatter(x=df['date'], y=normalized, name=var, line=dict(dash='dot')))
+#        fig_comp.update_layout(title='Normalized Comparison')
+#        st.plotly_chart(fig_comp, use_container_width=True)
 
-with tab4:
+with tab3:
     # -----------------------------
     # Allowed/relevant features for insights
     # -----------------------------
