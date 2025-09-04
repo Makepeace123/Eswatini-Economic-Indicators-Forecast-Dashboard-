@@ -180,7 +180,7 @@ st.markdown(
         top: 0;
         background-color: #f8f9fa;
         color: #2c3e50;
-        font-size: 28px;
+        font-size: 32px;
         font-weight: bold;
         text-align: center;
         padding: 10px 0;
@@ -188,7 +188,7 @@ st.markdown(
         z-index: 9999;
     }
     </style>
-    <div class="sticky-header">🇸🇿 Eswatini AgriVision Hub 🌾</div>
+    <div class="sticky-header">🇸🇿 Eswatini Agriculture Forecast Hub 🌾</div>
     """,
     unsafe_allow_html=True
 )
