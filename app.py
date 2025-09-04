@@ -188,7 +188,7 @@ st.markdown(
         z-index: 9999;
     }
     </style>
-    <div class="sticky-header">🇸🇿 Eswatini Agriculture Forecast Hub 🌾</div>
+    <div class="sticky-header">🇸🇿Eswatini AgriForecast Hub🌾</div>
     """,
     unsafe_allow_html=True
 )
