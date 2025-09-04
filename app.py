@@ -147,7 +147,7 @@ feature_importance = generate_feature_importance()
 # Sidebar
 # -----------------------------
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Flag_of_Eswatini.svg/1200px-Flag_of_Eswatini.svg.png", width=100)
+    #st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Flag_of_Eswatini.svg/1200px-Flag_of_Eswatini.svg.png", width=100)
     st.title("🌱 Eswatini Agriculture Forecast Hub")
     st.markdown("---")
     
@@ -180,7 +180,7 @@ st.markdown(
         top: 0;
         background-color: #f8f9fa;
         color: #2c3e50;
-        font-size: 24px;
+        font-size: 28px;
         font-weight: bold;
         text-align: center;
         padding: 10px 0;
