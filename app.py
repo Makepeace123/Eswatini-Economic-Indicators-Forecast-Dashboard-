@@ -49,17 +49,13 @@ if 'chat_messages' not in st.session_state:
 if 'last_input' not in st.session_state:
     st.session_state.last_input = ""
 
-if 'chat_open' not in st.session_state:   # ✅ FIXED: ensure chat_open exists
+if 'chat_open' not in st.session_state:
     st.session_state.chat_open = False
 
 # -----------------------------
 # Utility Functions
 # -----------------------------
 def get_ai_response(user_message, context_data=None):
-    """
-    Simulate AI response based on user message and context
-    In production, this would connect to OpenAI API, Claude API, etc.
-    """
     user_message = user_message.lower()
     
     if context_data:
@@ -388,50 +384,55 @@ with tab3:
             st.write(f"**Primary driver {i}**: {driver}")
         st.write(f"**Volatility**: {volatility:.1f}%")
 
-
+# -----------------------------
+# Recommended Actions Section
+# -----------------------------
 st.markdown("#### 🎯 Recommended Actions")
-    # Provide up to 5 relevant recommendations based on the selected variable
-        recommendations = []
-    if "Maize" in selected_variable or "Rice" in selected_variable:
-        recommendations = [
-            "Monitor grain reserves",
-            "Coordinate with agriculture ministry",
-            "Consider import/export adjustments",
-            "Assess storage and distribution capacity",
-            "Review price stabilization policies"
-        ]
-    elif "Diesel" in selected_variable or "Fuel" in selected_variable:
-        recommendations = [
-            "Review transportation costs",
-            "Assess supply chain impact",
-            "Monitor global oil trends",
-            "Optimize fuel consumption",
-            "Plan for potential price shocks"
-        ]
-    elif "Inflation" in selected_variable or "CPI" in selected_variable:
-        recommendations = [
-            "Update monetary policy targets",
-            "Coordinate with central bank",
-            "Assess impact on interest rates",
-            "Monitor consumer price trends",
-            "Adjust budget forecasts"
-        ]
-    else:
-        recommendations = [
-            "Monitor market trends",
-            "Coordinate with relevant ministry",
-            "Update budget forecasts",
-            "Track production levels",
-            "Review seasonal planning strategies"
-        ]
-    for rec in recommendations[:5]:
-        st.write(f"- {rec}")
+# Provide up to 5 relevant recommendations based on the selected variable
+recommendations = []
 
+if "Maize" in selected_variable or "Rice" in selected_variable:
+    recommendations = [
+        "Monitor grain reserves",
+        "Coordinate with agriculture ministry",
+        "Consider import/export adjustments",
+        "Assess storage and distribution capacity",
+        "Review price stabilization policies"
+    ]
+elif "Diesel" in selected_variable or "Fuel" in selected_variable:
+    recommendations = [
+        "Review transportation costs",
+        "Assess supply chain impact",
+        "Monitor global oil trends",
+        "Optimize fuel consumption",
+        "Plan for potential price shocks"
+    ]
+elif "Inflation" in selected_variable or "CPI" in selected_variable:
+    recommendations = [
+        "Update monetary policy targets",
+        "Coordinate with central bank",
+        "Assess impact on interest rates",
+        "Monitor consumer price trends",
+        "Adjust budget forecasts"
+    ]
+else:
+    recommendations = [
+        "Monitor market trends",
+        "Coordinate with relevant ministry",
+        "Update budget forecasts",
+        "Track production levels",
+        "Review seasonal planning strategies"
+    ]
 
-    
-    st.markdown("#### 🎯 AI Assistant Recommendations")
-    st.info("💡 **Ask the AI**: 'What factors are driving these changes?' or 'What should I watch for next week?'")
+for rec in recommendations[:5]:
+    st.write(f"- {rec}")
 
+st.markdown("#### 🎯 AI Assistant Recommendations")
+st.info("💡 **Ask the AI**: 'What factors are driving these changes?' or 'What should I watch for next week?'")
+
+# -----------------------------
+# Footer
+# -----------------------------
 st.markdown("---")
 st.markdown(
     f"""
@@ -443,6 +444,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# -----------------------------
+# Sidebar: Download CSV
+# -----------------------------
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📥 Download 30-Day Forecast")
 csv_data = forecasts_table[selected_variable].to_csv(index=False)
