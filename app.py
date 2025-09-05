@@ -7,6 +7,12 @@ import numpy as np
 from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
+import openai
+
+# -----------------------------
+# Load OpenAI API Key
+# -----------------------------
+openai.api_key = st.secrets["openai"]["api_key"]
 
 # -----------------------------
 # Page configuration
@@ -46,9 +52,6 @@ if 'chat_messages' not in st.session_state:
         {"role": "assistant", "content": "👋 Hi! I'm your AI Agriculture Assistant. I can help you understand forecasts, explain trends, and provide insights about Eswatini's agricultural markets. What would you like to know?"}
     ]
 
-if 'last_input' not in st.session_state:
-    st.session_state.last_input = ""
-
 if 'chat_open' not in st.session_state:
     st.session_state.chat_open = False
 
@@ -56,43 +59,32 @@ if 'chat_open' not in st.session_state:
 # Utility Functions
 # -----------------------------
 def get_ai_response(user_message, context_data=None):
-    user_message = user_message.lower()
-    
+    """
+    Get AI response from ChatGPT API.
+    """
+    context_text = ""
     if context_data:
         current_var = context_data.get('current_variable', 'Unknown')
-        forecast_val = context_data.get('forecast_value', 0)
         current_val = context_data.get('current_value', 0)
-    
-    if any(word in user_message for word in ['maize', 'corn', 'crop']):
-        return f"🌽 Based on current data, maize prices show {'upward' if context_data and forecast_val > current_val else 'downward'} trends. Our models suggest monitoring weather patterns and seasonal factors for better accuracy."
-    
-    elif any(word in user_message for word in ['price', 'forecast', 'prediction']):
-        if context_data:
-            change = ((forecast_val - current_val) / current_val * 100) if current_val != 0 else 0
-            return f"📈 For {current_var}, I'm forecasting a {change:+.1f}% change. This is based on our XGBoost model with 92% accuracy. Key factors include seasonal trends and market dynamics."
-        return "📊 I can help you understand price forecasts! Please select a specific variable from the sidebar to get detailed predictions."
-    
-    elif any(word in user_message for word in ['model', 'accuracy', 'performance']):
-        return "🤖 Our forecasting uses three models: XGBoost (best overall), MLP Neural Networks, and GRU. XGBoost typically achieves 90-96% accuracy across different agricultural commodities."
-    
-    elif any(word in user_message for word in ['weather', 'climate', 'season']):
-        return "🌦️ Weather is a crucial factor! Our models incorporate seasonal patterns, and I recommend monitoring rainfall and temperature data for crops like maize and vegetables."
-    
-    elif any(word in user_message for word in ['export', 'import', 'trade']):
-        return "🚢 Trade flows significantly impact local prices. Monitor SACU trade data and South African market trends, as they strongly influence Eswatini's agricultural markets."
-    
-    elif any(word in user_message for word in ['help', 'how', 'explain']):
-        return """🎯 I can help you with:
-• Price forecasts and trends
-• Model explanations and accuracy
-• Agricultural insights for Eswatini
-• Feature importance analysis
-• Market recommendations
-        
-Just ask me about any specific crop, price, or analysis!"""
-    
-    else:
-        return "🤖 I'm your AI agriculture analyst for Eswatini! Ask me about price forecasts, crop trends, model performance, or market insights. How can I help you today?"
+        forecast_val = context_data.get('forecast_value', 0)
+        context_text = f"Current variable: {current_var}, current value: {current_val}, forecast: {forecast_val}."
+
+    prompt = f"{context_text}\nUser: {user_message}\nAssistant:"
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are an AI agriculture assistant for Eswatini, giving advice on crop prices, forecasts, and market trends."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=300
+        )
+        answer = response.choices[0].message['content'].strip()
+        return answer
+    except Exception as e:
+        return f"⚠️ Error fetching response: {e}"
 
 def create_sample_data():
     dates = pd.date_range(start='2020-01-01', end=datetime.now(), freq='D')
@@ -129,11 +121,10 @@ def create_metrics():
     return metrics
 
 def create_feature_importance():
-    features = ['Onion SZL/1kg', 'Tomato (Round) SZL/1kg', 'Rice SZL/1kg', 'Gas SZL/1 liter',
+    features = ['Onion SZL/1kg', 'Tomato SZL/1kg', 'Rice SZL/1kg', 'Gas SZL/1 liter',
                 'Beans SZL/1kg', 'Cabbage SZL/Head', 'Diesel SZL/1 liter', 'Maize SZL/50kg',
                 'Brown Bread SZL', 'Sugar SZL/1kg', 'Potatoes SZL/50kg', 'Maize meal SZL/1kg',
-                'Money supply SZL', 'GDP by economic activity (Current Prices)', 
-                'Interest Rate (Prime lending rate)', 'All Items CPI', 'Inflation rate']
+                'Money supply SZL', 'GDP by economic activity', 'Interest Rate (Prime)', 'All Items CPI', 'Inflation rate']
     importance = {}
     for var in forecast_values.keys():
         imp_values = {f: round(np.random.uniform(0.1,1.0),3) for f in features}
@@ -145,60 +136,12 @@ def create_feature_importance():
 # -----------------------------
 st.markdown("""
 <style>
-    .main-header { font-size: 3rem; color: #2c3e50; text-align: center; margin-bottom: 2rem; }
-    .metric-card { background-color: #f8f9fa; padding: 1rem; border-radius: 10px; border-left: 4px solid #3498db; margin-bottom: 1rem; }
-    .forecast-card { background-color: #ffffff; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 1rem; }
-    .positive-change { color: #27ae60; font-weight: bold; }
-    .negative-change { color: #e74c3c; font-weight: bold; }
-    
-    .kpi-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-    }
-    .kpi-card {
-        background: #f2f2f2;
-        padding: 25px;
-        border-radius: 15px;
-        text-align: center;
-        box-shadow: 2px 2px 8px rgba(0,0,0,0.15);
-    }
-    .kpi-value {
-        font-size: 28px;
-        font-weight: bold;
-        color: #222222;
-    }
-    .kpi-label {
-        color: #555555;
-        font-size: 16px;
-        font-weight: 500;
-        margin-bottom: 8px;
-    }
-    
-    .sticky-header {
-        position: -webkit-sticky;
-        position: sticky;
-        top: 0;
-        background-color: #f8f9fa;
-        color: #2c3e50;
-        font-size: 32px;
-        font-weight: bold;
-        text-align: center;
-        padding: 10px 0;
-        border-bottom: 2px solid #3498db;
-        z-index: 9999;
-    }
-    
-    .chat-button {
-        background: linear-gradient(45deg, #3498db, #2ecc71);
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-weight: bold;
-        margin: 10px 0;
-    }
+.main-header { font-size: 3rem; color: #2c3e50; text-align: center; margin-bottom: 2rem; }
+.kpi-container { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
+.kpi-card { background: #f2f2f2; padding: 25px; border-radius: 15px; text-align:center; box-shadow: 2px 2px 8px rgba(0,0,0,0.15); }
+.kpi-value { font-size:28px; font-weight:bold; color:#222222; }
+.kpi-label { color:#555555; font-size:16px; font-weight:500; margin-bottom:8px; }
+.sticky-header { position: sticky; top:0; background-color:#f8f9fa; color:#2c3e50; font-size:32px; font-weight:bold; text-align:center; padding:10px 0; border-bottom:2px solid #3498db; z-index:9999; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -277,19 +220,12 @@ if st.session_state.chat_open:
         
         ai_response = get_ai_response(user_input, context)
         st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
-        
-        st.rerun()
+        st.experimental_rerun()
 
 # -----------------------------
-# Main content
+# Main Content
 # -----------------------------
-st.markdown(
-    """
-    <div class="sticky-header">🇸🇿Eswatini AgriForecast Hub🌾</div>
-    """,
-    unsafe_allow_html=True
-)
-
+st.markdown('<div class="sticky-header">🇸🇿 Eswatini AgriForecast Hub 🌾</div>', unsafe_allow_html=True)
 st.markdown(f'<h2 class="main-header">📈 {selected_variable} Forecast</h2>', unsafe_allow_html=True)
 
 current_value = df[selected_variable].iloc[-1]
@@ -297,35 +233,34 @@ forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]
 change_pct = ((forecast_value - current_value) / current_value) * 100
 volatility = df[selected_variable].pct_change().std() * 100
 
-st.markdown(
-    f"""
-    <div class="kpi-container">
-        <div class="kpi-card">
-            <div class="kpi-label">Current Value</div>
-            <div class="kpi-value">{current_value:.2f}</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Next Forecast</div>
-            <div class="kpi-value">{forecast_value:.2f} ({change_pct:+.1f}%)</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Best Model</div>
-            <div class="kpi-value">XGBoost<br><span style="font-size:18px;">MAE: {metrics[selected_variable]['xgb']['MAE']:.2f}</span></div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Volatility (30-day avg)</div>
-            <div class="kpi-value">{volatility:.1f}%</div>
-        </div>
+st.markdown(f"""
+<div class="kpi-container">
+    <div class="kpi-card">
+        <div class="kpi-label">Current Value</div>
+        <div class="kpi-value">{current_value:.2f}</div>
     </div>
-    """,
-    unsafe_allow_html=True
-)
+    <div class="kpi-card">
+        <div class="kpi-label">Next Forecast</div>
+        <div class="kpi-value">{forecast_value:.2f} ({change_pct:+.1f}%)</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Best Model</div>
+        <div class="kpi-value">XGBoost<br><span style="font-size:18px;">MAE: {metrics[selected_variable]['xgb']['MAE']:.2f}</span></div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Volatility (30-day avg)</div>
+        <div class="kpi-value">{volatility:.1f}%</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 st.info("💡 **Quick Tip:** Use the AI Assistant in the sidebar to get personalized insights about this forecast! Ask about trends, models, or get recommendations.")
-
 st.markdown("### 📊 30-Day Forecast Table")
 st.dataframe(forecasts_table[selected_variable])
 
+# -----------------------------
+# Tabs for Metrics, Features, Insights
+# -----------------------------
 tab1, tab2, tab3 = st.tabs(["📋 Model Performance", "🔍 Feature Analysis", "💡 Insights"])
 
 with tab1:
@@ -385,12 +320,10 @@ with tab3:
         st.write(f"**Volatility**: {volatility:.1f}%")
 
 # -----------------------------
-# Recommended Actions Section
+# Recommended Actions
 # -----------------------------
 st.markdown("#### 🎯 Recommended Actions")
-# Provide up to 5 relevant recommendations based on the selected variable
 recommendations = []
-
 if "Maize" in selected_variable or "Rice" in selected_variable:
     recommendations = [
         "Monitor grain reserves",
@@ -455,4 +388,4 @@ st.sidebar.download_button(
     csv_data, 
     file_name=f"{selected_variable.replace(' ','_').replace('/','_')}_30day.csv", 
     mime="text/csv"
-)
+    )
