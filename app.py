@@ -7,7 +7,6 @@ import numpy as np
 from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
-import time
 
 # -----------------------------
 # Page configuration
@@ -20,7 +19,38 @@ st.set_page_config(
 )
 
 # -----------------------------
-# Chatbot Functions
+# Forecast values
+# -----------------------------
+forecast_values = {
+    'Potatoes SZL/50kg': 82,
+    'Beans SZL/1kg': 41,
+    'Onion SZL/1kg': 9,
+    'Diesel SZL/1 liter': 22,
+    'Tomato SZL/1kg': 13,
+    'Maize SZL/50kg': 290,
+    'Sugar SZL/1kg': 18,
+    'Cabbage SZL/Head': 15,
+    'Gas SZL/1 liter': 19,
+    'Inflation rate': 4.8,
+    'Crop Production Index': 107
+}
+
+# -----------------------------
+# Session state initialization
+# -----------------------------
+if 'current_variable' not in st.session_state:
+    st.session_state.current_variable = 'Maize SZL/50kg'
+
+if 'chat_messages' not in st.session_state:
+    st.session_state.chat_messages = [
+        {"role": "assistant", "content": "👋 Hi! I'm your AI Agriculture Assistant. I can help you understand forecasts, explain trends, and provide insights about Eswatini's agricultural markets. What would you like to know?"}
+    ]
+
+if 'chat_open' not in st.session_state:
+    st.session_state.chat_open = False
+
+# -----------------------------
+# Utility Functions
 # -----------------------------
 def get_ai_response(user_message, context_data=None):
     """
@@ -37,7 +67,7 @@ def get_ai_response(user_message, context_data=None):
     
     # Agriculture-specific responses
     if any(word in user_message for word in ['maize', 'corn', 'crop']):
-        return f"🌽 Based on current data, maize prices show {'upward' if forecast_val > current_val else 'downward'} trends. Our models suggest monitoring weather patterns and seasonal factors for better accuracy."
+        return f"🌽 Based on current data, maize prices show {'upward' if context_data and forecast_val > current_val else 'downward'} trends. Our models suggest monitoring weather patterns and seasonal factors for better accuracy."
     
     elif any(word in user_message for word in ['price', 'forecast', 'prediction']):
         if context_data:
@@ -67,15 +97,59 @@ Just ask me about any specific crop, price, or analysis!"""
     else:
         return "🤖 I'm your AI agriculture analyst for Eswatini! Ask me about price forecasts, crop trends, model performance, or market insights. How can I help you today?"
 
-# Initialize chatbot session state
-if 'chat_messages' not in st.session_state:
-    st.session_state.chat_messages = [
-        {"role": "assistant", "content": "👋 Hi! I'm your AI Agriculture Assistant. I can help you understand forecasts, explain trends, and provide insights about Eswatini's agricultural markets. What would you like to know?"}
-    ]
-if 'chat_open' not in st.session_state:
-    st.session_state.chat_open = False
+def create_sample_data():
+    """Generate sample historical data"""
+    dates = pd.date_range(start='2020-01-01', end=datetime.now(), freq='D')
+    n_days = len(dates)
+    np.random.seed(42)
+    data = {'date': dates}
+    for var, val in forecast_values.items():
+        data[var] = np.linspace(val*0.8, val*1.2, n_days) + np.random.normal(0, val*0.05, n_days)
+    return pd.DataFrame(data)
 
-# Custom CSS for floating chatbot
+def create_forecasts_table():
+    """Generate 30-day forecast table"""
+    future_dates = [datetime.now().date() + timedelta(days=i) for i in range(1,31)]
+    forecasts_table = {}
+    for var, val in forecast_values.items():
+        fluctuation = val * 0.05
+        forecast_vals = val + np.random.uniform(-fluctuation, fluctuation, size=30)
+        forecasts_table[var] = pd.DataFrame({
+            'Date': future_dates,
+            'Forecast Value': np.round(forecast_vals, 2)
+        })
+    return forecasts_table
+
+def create_metrics():
+    """Generate model performance metrics"""
+    metrics = {}
+    models = ['xgb', 'mlp', 'gru']
+    for var in forecast_values.keys():
+        metrics[var] = {}
+        for model in models:
+            metrics[var][model] = {
+                'MAE': round(np.random.uniform(0.8, 2.5), 3),
+                'RMSE': round(np.random.uniform(1.2, 3.8), 3),
+                'R2': round(np.random.uniform(0.82, 0.96), 3)
+            }
+    return metrics
+
+def create_feature_importance():
+    """Generate feature importance data"""
+    features = ['Onion SZL/1kg', 'Tomato (Round) SZL/1kg', 'Rice SZL/1kg', 'Gas SZL/1 liter',
+                'Beans SZL/1kg', 'Cabbage SZL/Head', 'Diesel SZL/1 liter', 'Maize SZL/50kg',
+                'Brown Bread SZL', 'Sugar SZL/1kg', 'Potatoes SZL/50kg', 'Maize meal SZL/1kg',
+                'Money supply SZL', 'GDP by economic activity (Current Prices)', 
+                'Interest Rate (Prime lending rate)', 'All Items CPI', 'Inflation rate']
+    importance = {}
+    for var in forecast_values.keys():
+        imp_values = {f: round(np.random.uniform(0.1,1.0),3) for f in features}
+        importance[var] = dict(sorted(imp_values.items(), key=lambda x: x[1], reverse=True))
+    return importance
+
+# -----------------------------
+# Custom CSS
+# -----------------------------
 st.markdown("""
 <style>
     .main-header { font-size: 3rem; color: #2c3e50; text-align: center; margin-bottom: 2rem; }
@@ -83,91 +157,6 @@ st.markdown("""
     .forecast-card { background-color: #ffffff; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 1rem; }
     .positive-change { color: #27ae60; font-weight: bold; }
     .negative-change { color: #e74c3c; font-weight: bold; }
-    
-    /* Floating Chatbot Button */
-    .chatbot-button {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 1000;
-        background: linear-gradient(45deg, #3498db, #2ecc71);
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        font-size: 24px;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .chatbot-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-    }
-    
-    .chat-container {
-        position: fixed;
-        bottom: 90px;
-        right: 20px;
-        width: 350px;
-        height: 400px;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-        z-index: 999;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-    
-    .chat-header {
-        background: linear-gradient(45deg, #3498db, #2ecc71);
-        color: white;
-        padding: 12px 16px;
-        font-weight: bold;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .chat-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-        background: #f8f9fa;
-    }
-    
-    .message {
-        margin-bottom: 10px;
-        padding: 8px 12px;
-        border-radius: 15px;
-        max-width: 80%;
-        word-wrap: break-word;
-    }
-    
-    .user-message {
-        background: #3498db;
-        color: white;
-        margin-left: auto;
-        text-align: right;
-    }
-    
-    .assistant-message {
-        background: white;
-        color: #333;
-        border: 1px solid #e0e0e0;
-    }
-    
-    .chat-input-container {
-        padding: 10px;
-        background: white;
-        border-top: 1px solid #e0e0e0;
-    }
     
     .kpi-container {
         display: grid;
@@ -206,95 +195,27 @@ st.markdown("""
         border-bottom: 2px solid #3498db;
         z-index: 9999;
     }
+    
+    .chat-button {
+        background: linear-gradient(45deg, #3498db, #2ecc71);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+        margin: 10px 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# Forecast values
+# Generate data using non-cached functions
 # -----------------------------
-forecast_values = {
-    'Potatoes SZL/50kg': 82,
-    'Beans SZL/1kg': 41,
-    'Onion SZL/1kg': 9,
-    'Diesel SZL/1 liter': 22,
-    'Tomato SZL/1kg': 13,
-    'Maize SZL/50kg': 290,
-    'Sugar SZL/1kg': 18,
-    'Cabbage SZL/Head': 15,
-    'Gas SZL/1 liter': 19,
-    'Inflation rate': 4.8,
-    'Crop Production Index': 107
-}
-
-# -----------------------------
-# Session state
-# -----------------------------
-if 'current_variable' not in st.session_state:
-    st.session_state.current_variable = 'Maize SZL/50kg'
-
-# -----------------------------
-# Sample historical data (placeholder)
-# -----------------------------
-@st.cache_data
-def generate_sample_data():
-    dates = pd.date_range(start='2020-01-01', end=datetime.now(), freq='D')
-    n_days = len(dates)
-    np.random.seed(42)
-    data = {'date': dates}
-    for var, val in forecast_values.items():
-        data[var] = np.linspace(val*0.8, val*1.2, n_days) + np.random.normal(0, val*0.05, n_days)
-    return pd.DataFrame(data)
-
-df = generate_sample_data()
-
-# -----------------------------
-# Generate forecasts, metrics, and feature importance (same as before)
-# -----------------------------
-@st.cache_data
-def generate_forecasts_table():
-    future_dates = [datetime.now().date() + timedelta(days=i) for i in range(1,31)]
-    forecasts_table = {}
-    for var, val in forecast_values.items():
-        fluctuation = val * 0.05
-        forecast_vals = val + np.random.uniform(-fluctuation, fluctuation, size=30)
-        forecasts_table[var] = pd.DataFrame({
-            'Date': future_dates,
-            'Forecast Value': np.round(forecast_vals, 2)
-        })
-    return forecasts_table
-
-forecasts_table = generate_forecasts_table()
-
-@st.cache_data
-def generate_metrics():
-    metrics = {}
-    models = ['xgb', 'mlp', 'gru']
-    for var in forecast_values.keys():
-        metrics[var] = {}
-        for model in models:
-            metrics[var][model] = {
-                'MAE': round(np.random.uniform(0.8, 2.5), 3),
-                'RMSE': round(np.random.uniform(1.2, 3.8), 3),
-                'R2': round(np.random.uniform(0.82, 0.96), 3)
-            }
-    return metrics
-
-metrics = generate_metrics()
-
-@st.cache_data
-def generate_feature_importance():
-    features = ['Onion SZL/1kg', 'Tomato (Round) SZL/1kg', 'Rice SZL/1kg', 'Gas SZL/1 liter',
-                'Beans SZL/1kg', 'Cabbage SZL/Head', 'Diesel SZL/1 liter', 'Maize SZL/50kg',
-                'Brown Bread SZL', 'Sugar SZL/1kg', 'Potatoes SZL/50kg', 'Maize meal SZL/1kg',
-                'Money supply SZL', 'GDP by economic activity (Current Prices)', 
-                'Interest Rate (Prime lending rate)', 'All Items CPI', 'Inflation rate']
-    importance = {}
-    for var in forecast_values.keys():
-        imp_values = {f: round(np.random.uniform(0.1,1.0),3) for f in features}
-        importance[var] = dict(sorted(imp_values.items(), key=lambda x: x[1], reverse=True))
-    return importance
-
-feature_importance = generate_feature_importance()
+df = create_sample_data()
+forecasts_table = create_forecasts_table()
+metrics = create_metrics()
+feature_importance = create_feature_importance()
 
 # -----------------------------
 # Sidebar
@@ -317,7 +238,7 @@ with st.sidebar:
     - Multi-model performance comparison
     - Feature importance analysis
     - Downloadable 30-day forecasts
-    - **AI Assistant** (click chat button!)
+    - **AI Assistant** (below!)
     """)
 
 # -----------------------------
@@ -327,25 +248,34 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("### 🤖 AI Assistant")
 
 # Chat toggle
-if st.sidebar.button("💬 Open Chat Assistant"):
-    st.session_state.chat_open = not st.session_state.chat_open
+col1, col2 = st.sidebar.columns([3, 1])
+with col1:
+    if st.button("💬 Toggle Chat", key="chat_toggle"):
+        st.session_state.chat_open = not st.session_state.chat_open
+
+with col2:
+    if st.button("🗑️", key="clear_chat", help="Clear chat history"):
+        st.session_state.chat_messages = [
+            {"role": "assistant", "content": "👋 Chat cleared! How can I help you with agricultural forecasts?"}
+        ]
 
 if st.session_state.chat_open:
     st.sidebar.markdown("**Chat with AI Assistant:**")
     
-    # Display chat messages
+    # Display chat messages in a container
     chat_container = st.sidebar.container()
     with chat_container:
-        for message in st.session_state.chat_messages[-5:]:  # Show last 5 messages
+        # Show last 4 messages to save space
+        for message in st.session_state.chat_messages[-4:]:
             if message["role"] == "user":
-                st.markdown(f"**You:** {message['content']}")
+                st.sidebar.markdown(f"**You:** {message['content']}")
             else:
-                st.markdown(f"**AI:** {message['content']}")
+                st.sidebar.markdown(f"**🤖 AI:** {message['content']}")
     
     # Chat input
-    user_input = st.sidebar.text_input("Ask me anything about the forecasts:", key="chat_input")
+    user_input = st.sidebar.text_input("Ask me anything:", key="chat_input", placeholder="e.g., What will maize prices be next week?")
     
-    if st.sidebar.button("Send") and user_input:
+    if st.sidebar.button("Send 📤", key="send_message") and user_input:
         # Add user message
         st.session_state.chat_messages.append({"role": "user", "content": user_input})
         
@@ -366,7 +296,7 @@ if st.session_state.chat_open:
         st.rerun()
 
 # -----------------------------
-# Main content (same as before)
+# Main content
 # -----------------------------
 st.markdown(
     """
@@ -406,6 +336,9 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+# Add AI Assistant quick access
+st.info("💡 **Quick Tip:** Use the AI Assistant in the sidebar to get personalized insights about this forecast! Ask about trends, models, or get recommendations.")
 
 # 30-day forecast table
 st.markdown("### 📊 30-Day Forecast Table")
@@ -471,7 +404,7 @@ with tab3:
         st.write(f"**Volatility**: {volatility:.1f}%")
     
     st.markdown("#### 🎯 AI Assistant Recommendations")
-    st.info("💡 **Tip**: Use the AI Assistant in the sidebar to get personalized insights about this forecast!")
+    st.info("💡 **Ask the AI**: 'What factors are driving these changes?' or 'What should I watch for next week?'")
 
 # Footer
 st.markdown("---")
@@ -485,17 +418,23 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# Download section
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📥 Download 30-Day Forecast")
 if st.sidebar.button("Download CSV"):
     csv_data = forecasts_table[selected_variable].to_csv(index=False)
-    st.sidebar.download_button("Download CSV", csv_data, file_name=f"{selected_variable.replace(' ','_')}_30day.csv", mime="text/csv")
+    st.sidebar.download_button(
+        "📄 Download CSV", 
+        csv_data, 
+        file_name=f"{selected_variable.replace(' ','_').replace('/','_')}_30day.csv", 
+        mime="text/csv"
+    )
 
-# Add floating chatbot button using HTML/JS (alternative approach)
+# Add floating chatbot indicator
 st.markdown("""
 <div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
     <div style="background: linear-gradient(45deg, #3498db, #2ecc71); color: white; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer;" 
-         title="Click to open AI Assistant in sidebar!">
+         title="AI Assistant available in sidebar!">
         🤖
     </div>
 </div>
