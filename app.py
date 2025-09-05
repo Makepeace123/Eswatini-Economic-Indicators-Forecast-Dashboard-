@@ -46,9 +46,11 @@ if 'chat_messages' not in st.session_state:
         {"role": "assistant", "content": "👋 Hi! I'm your AI Agriculture Assistant. I can help you understand forecasts, explain trends, and provide insights about Eswatini's agricultural markets. What would you like to know?"}
     ]
 
-# Initialize session state for input tracking
 if 'last_input' not in st.session_state:
     st.session_state.last_input = ""
+
+if 'chat_open' not in st.session_state:   # ✅ FIXED: ensure chat_open exists
+    st.session_state.chat_open = False
 
 # -----------------------------
 # Utility Functions
@@ -60,13 +62,11 @@ def get_ai_response(user_message, context_data=None):
     """
     user_message = user_message.lower()
     
-    # Context-aware responses based on current page data
     if context_data:
         current_var = context_data.get('current_variable', 'Unknown')
         forecast_val = context_data.get('forecast_value', 0)
         current_val = context_data.get('current_value', 0)
     
-    # Agriculture-specific responses
     if any(word in user_message for word in ['maize', 'corn', 'crop']):
         return f"🌽 Based on current data, maize prices show {'upward' if context_data and forecast_val > current_val else 'downward'} trends. Our models suggest monitoring weather patterns and seasonal factors for better accuracy."
     
@@ -99,7 +99,6 @@ Just ask me about any specific crop, price, or analysis!"""
         return "🤖 I'm your AI agriculture analyst for Eswatini! Ask me about price forecasts, crop trends, model performance, or market insights. How can I help you today?"
 
 def create_sample_data():
-    """Generate sample historical data"""
     dates = pd.date_range(start='2020-01-01', end=datetime.now(), freq='D')
     n_days = len(dates)
     np.random.seed(42)
@@ -109,7 +108,6 @@ def create_sample_data():
     return pd.DataFrame(data)
 
 def create_forecasts_table():
-    """Generate 30-day forecast table"""
     future_dates = [datetime.now().date() + timedelta(days=i) for i in range(1,31)]
     forecasts_table = {}
     for var, val in forecast_values.items():
@@ -122,7 +120,6 @@ def create_forecasts_table():
     return forecasts_table
 
 def create_metrics():
-    """Generate model performance metrics"""
     metrics = {}
     models = ['xgb', 'mlp', 'gru']
     for var in forecast_values.keys():
@@ -136,7 +133,6 @@ def create_metrics():
     return metrics
 
 def create_feature_importance():
-    """Generate feature importance data"""
     features = ['Onion SZL/1kg', 'Tomato (Round) SZL/1kg', 'Rice SZL/1kg', 'Gas SZL/1 liter',
                 'Beans SZL/1kg', 'Cabbage SZL/Head', 'Diesel SZL/1 liter', 'Maize SZL/50kg',
                 'Brown Bread SZL', 'Sugar SZL/1kg', 'Potatoes SZL/50kg', 'Maize meal SZL/1kg',
@@ -211,7 +207,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -----------------------------
-# Generate data using non-cached functions
+# Generate data
 # -----------------------------
 df = create_sample_data()
 forecasts_table = create_forecasts_table()
@@ -248,7 +244,6 @@ with st.sidebar:
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🤖 AI Assistant")
 
-# Chat toggle
 col1, col2 = st.sidebar.columns([3, 1])
 with col1:
     if st.button("💬 Toggle Chat", key="chat_toggle"):
@@ -263,24 +258,19 @@ with col2:
 if st.session_state.chat_open:
     st.sidebar.markdown("**Chat with AI Assistant:**")
     
-    # Display chat messages in a container
     chat_container = st.sidebar.container()
     with chat_container:
-        # Show last 4 messages to save space
         for message in st.session_state.chat_messages[-4:]:
             if message["role"] == "user":
                 st.sidebar.markdown(f"**You:** {message['content']}")
             else:
                 st.sidebar.markdown(f"**🤖 AI:** {message['content']}")
     
-    # Chat input
     user_input = st.sidebar.text_input("Ask me anything:", key="chat_input", placeholder="e.g., What will maize prices be next week?")
     
     if st.sidebar.button("Send 📤", key="send_message") and user_input:
-        # Add user message
         st.session_state.chat_messages.append({"role": "user", "content": user_input})
         
-        # Prepare context for AI
         current_value = df[selected_variable].iloc[-1]
         forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]
         context = {
@@ -289,11 +279,9 @@ if st.session_state.chat_open:
             'forecast_value': forecast_value
         }
         
-        # Get AI response
         ai_response = get_ai_response(user_input, context)
         st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
         
-        # Rerun to update display
         st.rerun()
 
 # -----------------------------
@@ -308,7 +296,6 @@ st.markdown(
 
 st.markdown(f'<h2 class="main-header">📈 {selected_variable} Forecast</h2>', unsafe_allow_html=True)
 
-# Get values for display
 current_value = df[selected_variable].iloc[-1]
 forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]
 change_pct = ((forecast_value - current_value) / current_value) * 100
@@ -338,14 +325,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Add AI Assistant quick access
 st.info("💡 **Quick Tip:** Use the AI Assistant in the sidebar to get personalized insights about this forecast! Ask about trends, models, or get recommendations.")
 
-# 30-day forecast table
 st.markdown("### 📊 30-Day Forecast Table")
 st.dataframe(forecasts_table[selected_variable])
 
-# Tabs for additional info
 tab1, tab2, tab3 = st.tabs(["📋 Model Performance", "🔍 Feature Analysis", "💡 Insights"])
 
 with tab1:
@@ -407,7 +391,6 @@ with tab3:
     st.markdown("#### 🎯 AI Assistant Recommendations")
     st.info("💡 **Ask the AI**: 'What factors are driving these changes?' or 'What should I watch for next week?'")
 
-# Footer
 st.markdown("---")
 st.markdown(
     f"""
@@ -419,24 +402,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Download section
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📥 Download 30-Day Forecast")
-if st.sidebar.button("Download CSV"):
-    csv_data = forecasts_table[selected_variable].to_csv(index=False)
-    st.sidebar.download_button(
-        "📄 Download CSV", 
-        csv_data, 
-        file_name=f"{selected_variable.replace(' ','_').replace('/','_')}_30day.csv", 
-        mime="text/csv"
-    )
-
-# Add floating chatbot indicator
-st.markdown("""
-<div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-    <div style="background: linear-gradient(45deg, #3498db, #2ecc71); color: white; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer;" 
-         title="AI Assistant available in sidebar!">
-        🤖
-    </div>
-</div>
-""", unsafe_allow_html=True)
+csv_data = forecasts_table[selected_variable].to_csv(index=False)
+st.sidebar.download_button(
+    "📄 Download CSV", 
+    csv_data, 
+    file_name=f"{selected_variable.replace(' ','_').replace('/','_')}_30day.csv", 
+    mime="text/csv"
+)
