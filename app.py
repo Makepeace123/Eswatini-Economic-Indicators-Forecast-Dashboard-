@@ -46,8 +46,9 @@ if 'chat_messages' not in st.session_state:
         {"role": "assistant", "content": "👋 Hi! I'm your AI Agriculture Assistant. I can help you understand forecasts, explain trends, and provide insights about Eswatini's agricultural markets. What would you like to know?"}
     ]
 
-if 'chat_open' not in st.session_state:
-    st.session_state.chat_open = False
+# Initialize session state for input tracking
+if 'last_input' not in st.session_state:
+    st.session_state.last_input = ""
 
 # -----------------------------
 # Utility Functions
