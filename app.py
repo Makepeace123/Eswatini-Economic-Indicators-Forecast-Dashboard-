@@ -8,6 +8,9 @@ from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
 
+
+openai.api_key = st.secrets["openai"]["api_key"]
+
 # -----------------------------
 # Page configuration
 # -----------------------------
