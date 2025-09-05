@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Eswatini Economic Forecast Dashboard - Streamlit Version (Agriculture Edition) with AI Chatbot"""
+"""Eswatini Economic Forecast Dashboard - Streamlit Version (Agriculture Edition) with AI Chatbot (ChatGPT Integration)"""
 
 import streamlit as st
 import pandas as pd
@@ -9,6 +9,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import openai
 
+# -----------------------------
+# Load OpenAI API Key from Streamlit secrets
+# -----------------------------
 openai.api_key = st.secrets["openai"]["api_key"]
 
 # -----------------------------
@@ -49,9 +52,6 @@ if 'chat_messages' not in st.session_state:
         {"role": "assistant", "content": "👋 Hi! I'm your AI Agriculture Assistant. I can help you understand forecasts, explain trends, and provide insights about Eswatini's agricultural markets. What would you like to know?"}
     ]
 
-if 'last_input' not in st.session_state:
-    st.session_state.last_input = ""
-
 if 'chat_open' not in st.session_state:
     st.session_state.chat_open = False
 
@@ -59,43 +59,32 @@ if 'chat_open' not in st.session_state:
 # Utility Functions
 # -----------------------------
 def get_ai_response(user_message, context_data=None):
-    user_message = user_message.lower()
-    
+    """
+    Get AI response from OpenAI ChatGPT API.
+    """
+    context_text = ""
     if context_data:
         current_var = context_data.get('current_variable', 'Unknown')
-        forecast_val = context_data.get('forecast_value', 0)
         current_val = context_data.get('current_value', 0)
-    
-    if any(word in user_message for word in ['maize', 'corn', 'crop']):
-        return f"🌽 Based on current data, maize prices show {'upward' if context_data and forecast_val > current_val else 'downward'} trends. Our models suggest monitoring weather patterns and seasonal factors for better accuracy."
-    
-    elif any(word in user_message for word in ['price', 'forecast', 'prediction']):
-        if context_data:
-            change = ((forecast_val - current_val) / current_val * 100) if current_val != 0 else 0
-            return f"📈 For {current_var}, I'm forecasting a {change:+.1f}% change. This is based on our XGBoost model with 92% accuracy. Key factors include seasonal trends and market dynamics."
-        return "📊 I can help you understand price forecasts! Please select a specific variable from the sidebar to get detailed predictions."
-    
-    elif any(word in user_message for word in ['model', 'accuracy', 'performance']):
-        return "🤖 Our forecasting uses three models: XGBoost (best overall), MLP Neural Networks, and GRU. XGBoost typically achieves 90-96% accuracy across different agricultural commodities."
-    
-    elif any(word in user_message for word in ['weather', 'climate', 'season']):
-        return "🌦️ Weather is a crucial factor! Our models incorporate seasonal patterns, and I recommend monitoring rainfall and temperature data for crops like maize and vegetables."
-    
-    elif any(word in user_message for word in ['export', 'import', 'trade']):
-        return "🚢 Trade flows significantly impact local prices. Monitor SACU trade data and South African market trends, as they strongly influence Eswatini's agricultural markets."
-    
-    elif any(word in user_message for word in ['help', 'how', 'explain']):
-        return """🎯 I can help you with:
-• Price forecasts and trends
-• Model explanations and accuracy
-• Agricultural insights for Eswatini
-• Feature importance analysis
-• Market recommendations
-        
-Just ask me about any specific crop, price, or analysis!"""
-    
-    else:
-        return "🤖 I'm your AI agriculture analyst for Eswatini! Ask me about price forecasts, crop trends, model performance, or market insights. How can I help you today?"
+        forecast_val = context_data.get('forecast_value', 0)
+        context_text = f"Current variable: {current_var}, current value: {current_val}, forecast: {forecast_val}."
+
+    prompt = f"{context_text}\nUser: {user_message}\nAssistant:"
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # or "gpt-4" if available
+            messages=[
+                {"role": "system", "content": "You are an AI agriculture assistant for Eswatini, providing guidance on crop prices, forecasts, and market trends."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=300
+        )
+        answer = response.choices[0].message['content'].strip()
+        return answer
+    except Exception as e:
+        return f"⚠️ Error fetching response: {e}"
 
 def create_sample_data():
     dates = pd.date_range(start='2020-01-01', end=datetime.now(), freq='D')
@@ -280,11 +269,10 @@ if st.session_state.chat_open:
         
         ai_response = get_ai_response(user_input, context)
         st.session_state.chat_messages.append({"role": "assistant", "content": ai_response})
-        
         st.rerun()
 
 # -----------------------------
-# Main content
+# Main content (Forecast KPIs, Charts, Recommendations)
 # -----------------------------
 st.markdown(
     """
@@ -387,13 +375,8 @@ with tab3:
             st.write(f"**Primary driver {i}**: {driver}")
         st.write(f"**Volatility**: {volatility:.1f}%")
 
-# -----------------------------
-# Recommended Actions Section
-# -----------------------------
 st.markdown("#### 🎯 Recommended Actions")
-# Provide up to 5 relevant recommendations based on the selected variable
 recommendations = []
-
 if "Maize" in selected_variable or "Rice" in selected_variable:
     recommendations = [
         "Monitor grain reserves",
@@ -426,7 +409,6 @@ else:
         "Track production levels",
         "Review seasonal planning strategies"
     ]
-
 for rec in recommendations[:5]:
     st.write(f"- {rec}")
 
