@@ -391,7 +391,7 @@ with tab3:
 
 st.markdown("#### 🎯 Recommended Actions")
     # Provide up to 5 relevant recommendations based on the selected variable
-    recommendations = []
+    #recommendations = []
     if "Maize" in selected_variable or "Rice" in selected_variable:
         recommendations = [
             "Monitor grain reserves",
