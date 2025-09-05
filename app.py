@@ -423,7 +423,7 @@ else:
         "Monitor market trends",
         "Coordinate with relevant ministry",
         "Update budget forecasts",
-        ""Track production levels",
+        "Track production levels",
         "Review seasonal planning strategies"
     ]
 
