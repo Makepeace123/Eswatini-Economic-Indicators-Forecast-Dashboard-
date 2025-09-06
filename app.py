@@ -413,7 +413,7 @@ with tab3:
             st.write(f"- {rec}")
 
    # st.markdown("#### 🎯 AI Assistant Recommendations")
-    st.info("💡 **Ask the AI Assistant at the Sidebar**: 'What factors are driving these changes?' or 'What should I watch for next week?'")
+    st.info("💡 **Ask the AI Assistant at the Sidebar**:       'What factors are driving these changes?' or 'What should I watch for next week?'")
 
 # -----------------------------
 # Footer
