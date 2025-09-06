@@ -312,8 +312,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.info("💡 **Quick Tip:** Use the AI Assistant in the sidebar to get personalized insights about this forecast! Ask about trends, models, or get recommendations.")
-
 st.markdown("### 📊 30-Day Forecast Table")
 st.dataframe(forecasts_table[selected_variable])
 
@@ -413,7 +411,7 @@ with tab3:
             st.write(f"- {rec}")
 
    # st.markdown("#### 🎯 AI Assistant Recommendations")
-    st.info("💡 **Ask the AI Assistant at the Sidebar**:       'What factors are driving these changes?' or 'What should I watch for next week?'")
+    st.info("💡 **Quick Tip:** Use the AI Assistant in the sidebar to get personalized insights about this forecast! Ask about trends, models, or get recommendations.")
 
 # -----------------------------
 # Footer
