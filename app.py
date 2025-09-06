@@ -412,7 +412,7 @@ with tab3:
         for rec in recommendations[:5]:
             st.write(f"- {rec}")
 
-    st.markdown("#### 🎯 AI Assistant Recommendations")
+   # st.markdown("#### 🎯 AI Assistant Recommendations")
     st.info("💡 **Ask the AI**: 'What factors are driving these changes?' or 'What should I watch for next week?'")
 
 # -----------------------------
