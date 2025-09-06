@@ -375,42 +375,42 @@ with tab3:
             st.write(f"**Primary driver {i}**: {driver}")
         st.write(f"**Volatility**: {volatility:.1f}%")
 
-st.markdown("#### 🎯 Recommended Actions")
-recommendations = []
-if "Maize" in selected_variable or "Rice" in selected_variable:
-    recommendations = [
-        "Monitor grain reserves",
-        "Coordinate with agriculture ministry",
-        "Consider import/export adjustments",
-        "Assess storage and distribution capacity",
-        "Review price stabilization policies"
-    ]
-elif "Diesel" in selected_variable or "Fuel" in selected_variable:
-    recommendations = [
-        "Review transportation costs",
-        "Assess supply chain impact",
-        "Monitor global oil trends",
-        "Optimize fuel consumption",
-        "Plan for potential price shocks"
-    ]
-elif "Inflation" in selected_variable or "CPI" in selected_variable:
-    recommendations = [
-        "Update monetary policy targets",
-        "Coordinate with central bank",
-        "Assess impact on interest rates",
-        "Monitor consumer price trends",
-        "Adjust budget forecasts"
-    ]
-else:
-    recommendations = [
-        "Monitor market trends",
-        "Coordinate with relevant ministry",
-        "Update budget forecasts",
-        "Track production levels",
-        "Review seasonal planning strategies"
-    ]
-for rec in recommendations[:5]:
-    st.write(f"- {rec}")
+    st.markdown("#### 🎯 Recommended Actions")
+    recommendations = []
+    if "Maize" in selected_variable or "Rice" in selected_variable:
+        recommendations = [
+            "Monitor grain reserves",
+            "Coordinate with agriculture ministry",
+            "Consider import/export adjustments",
+            "Assess storage and distribution capacity",
+            "Review price stabilization policies" 
+        ]
+    elif "Diesel" in selected_variable or "Fuel" in selected_variable:
+        recommendations = [
+            "Review transportation costs",
+            "Assess supply chain impact",
+            "Monitor global oil trends",
+            "Optimize fuel consumption",
+            "Plan for potential price shocks"
+        ]
+    elif "Inflation" in selected_variable or "CPI" in selected_variable:
+        recommendations = [
+            "Update monetary policy targets",
+            "Coordinate with central bank",
+            "Assess impact on interest rates",
+            "Monitor consumer price trends",
+            "Adjust budget forecasts"
+        ]
+    else:
+        recommendations = [
+            "Monitor market trends",
+            "Coordinate with relevant ministry",
+            "Update budget forecasts",
+            "Track production levels",
+            "Review seasonal planning strategies"
+        ]
+        for rec in recommendations[:5]:
+            st.write(f"- {rec}")
 
 st.markdown("#### 🎯 AI Assistant Recommendations")
 st.info("💡 **Ask the AI**: 'What factors are driving these changes?' or 'What should I watch for next week?'")
