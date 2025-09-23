@@ -301,8 +301,8 @@ st.markdown(f'<h2 class="main-header">📈 {selected_variable} Forecast</h2>', u
 # EDITED: Use the actual current day value and next day forecast
 current_value = df[selected_variable].iloc[-1]  # This now matches the base forecast value
 forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]  # First forecast value (tomorrow)
-#change_pct = ((forecast_value - current_value) / current_value) * 100
-#volatility = df[selected_variable].pct_change().std() * 100
+change_pct = ((forecast_value - current_value) / current_value) * 100
+volatility = df[selected_variable].pct_change().std() * 100
 
 st.markdown(
     f"""
