@@ -315,15 +315,6 @@ st.markdown(
             <div class="kpi-label">Next Forecast </div>
             <div class="kpi-value">{forecast_value:.2f} ({change_pct:+.1f}%)</div>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Best Model</div>
-            <div class="kpi-value">XGBoost<br><span style="font-size:18px;">MAE: {metrics[selected_variable]['xgb']['MAE']:.2f}</span></div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Volatility (30-day avg)</div>
-            <div class="kpi-value">{volatility:.1f}%</div>
-        </div>
-    </div>
     """,
     unsafe_allow_html=True
 )
