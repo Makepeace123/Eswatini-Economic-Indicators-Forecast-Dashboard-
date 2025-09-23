@@ -56,7 +56,7 @@ if 'chat_open' not in st.session_state:
     st.session_state.chat_open = False
 
 # -----------------------------
-# Utility Functions - EDITED: Modified create_forecasts_table function
+# Utility Functions - EDITED: Modified create_sample_data and create_forecasts_table functions
 # -----------------------------
 def get_ai_response(user_message, context_data=None):
     """
@@ -87,31 +87,34 @@ def get_ai_response(user_message, context_data=None):
         return f"⚠️ Error fetching response: {e}"
 
 def create_sample_data():
+    """
+    EDITED: Ensure the last value (current day) matches the base forecast value
+    """
     dates = pd.date_range(start='2020-01-01', end=datetime.now(), freq='D')
     n_days = len(dates)
     np.random.seed(42)
     data = {'date': dates}
     for var, val in forecast_values.items():
-        data[var] = np.linspace(val*0.8, val*1.2, n_days) + np.random.normal(0, val*0.05, n_days)
+        # Generate data with the last value exactly matching the base forecast value
+        base_values = np.linspace(val*0.8, val, n_days) + np.random.normal(0, val*0.05, n_days)
+        # Ensure the last value is exactly the base forecast value
+        base_values[-1] = val
+        data[var] = base_values
     return pd.DataFrame(data)
 
 def create_forecasts_table():
     """
-    EDITED: Modified to ensure forecast values have at least ±5 range
+    EDITED: Modified to ensure forecast values have exactly ±5 range
+    and first forecast value is used for "Next Forecast" display
     """
     future_dates = [datetime.now().date() + timedelta(days=i) for i in range(1,31)]
     forecasts_table = {}
     
     for var, val in forecast_values.items():
-        # Ensure minimum fluctuation of ±5
-        min_fluctuation = 5
-        # For variables with small base values, use percentage-based fluctuation
-        if val < 20:  # Small value items like inflation rate, some prices
-            fluctuation = max(val * 0.15, min_fluctuation)  # Use 15% or ±5, whichever is larger
-        else:  # Larger value items
-            fluctuation = max(val * 0.08, min_fluctuation)  # Use 8% or ±5, whichever is larger
+        # Strictly use ±5 range for all variables
+        fluctuation = 5
         
-        # Generate forecast values with the calculated fluctuation
+        # Generate forecast values with exactly ±5 fluctuation
         forecast_vals = val + np.random.uniform(-fluctuation, fluctuation, size=30)
         forecasts_table[var] = pd.DataFrame({
             'Date': future_dates,
@@ -295,8 +298,9 @@ st.markdown(
 
 st.markdown(f'<h2 class="main-header">📈 {selected_variable} Forecast</h2>', unsafe_allow_html=True)
 
-current_value = df[selected_variable].iloc[-1]
-forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]
+# EDITED: Use the actual current day value and next day forecast
+current_value = df[selected_variable].iloc[-1]  # This now matches the base forecast value
+forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]  # First forecast value (tomorrow)
 change_pct = ((forecast_value - current_value) / current_value) * 100
 volatility = df[selected_variable].pct_change().std() * 100
 
@@ -304,11 +308,11 @@ st.markdown(
     f"""
     <div class="kpi-container">
         <div class="kpi-card">
-            <div class="kpi-label">Current Value</div>
+            <div class="kpi-label">Current Value (Today)</div>
             <div class="kpi-value">{current_value:.2f}</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-label">Next Forecast</div>
+            <div class="kpi-label">Next Forecast (Tomorrow)</div>
             <div class="kpi-value">{forecast_value:.2f} ({change_pct:+.1f}%)</div>
         </div>
         <div class="kpi-card">
@@ -450,4 +454,4 @@ st.sidebar.download_button(
     csv_data, 
     file_name=f"{selected_variable.replace(' ','_').replace('/','_')}_30day.csv", 
     mime="text/csv"
-)
+        )
