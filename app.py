@@ -301,18 +301,18 @@ st.markdown(f'<h2 class="main-header">📈 {selected_variable} Forecast</h2>', u
 # EDITED: Use the actual current day value and next day forecast
 current_value = df[selected_variable].iloc[-1]  # This now matches the base forecast value
 forecast_value = forecasts_table[selected_variable]['Forecast Value'].iloc[0]  # First forecast value (tomorrow)
-change_pct = ((forecast_value - current_value) / current_value) * 100
-volatility = df[selected_variable].pct_change().std() * 100
+#change_pct = ((forecast_value - current_value) / current_value) * 100
+#volatility = df[selected_variable].pct_change().std() * 100
 
 st.markdown(
     f"""
     <div class="kpi-container">
         <div class="kpi-card">
-            <div class="kpi-label">Current Value (Today)</div>
+            <div class="kpi-label">Current Value </div>
             <div class="kpi-value">{current_value:.2f}</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-label">Next Forecast (Tomorrow)</div>
+            <div class="kpi-label">Next Forecast </div>
             <div class="kpi-value">{forecast_value:.2f} ({change_pct:+.1f}%)</div>
         </div>
         <div class="kpi-card">
