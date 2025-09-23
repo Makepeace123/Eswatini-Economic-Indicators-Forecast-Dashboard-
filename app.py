@@ -313,7 +313,7 @@ st.markdown(
         </div>
         <div class="kpi-card">
             <div class="kpi-label">Next Forecast </div>
-            <div class="kpi-value">{forecast_value:.2f} ({change_pct:+.1f}%)</div>
+            <div class="kpi-value">{forecast_value:.2f} </div>
         </div>
     """,
     unsafe_allow_html=True
