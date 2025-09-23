@@ -25,7 +25,7 @@ st.set_page_config(
 )
 
 # -----------------------------
-# Forecast values
+# Forecast values - EDITED: Adjusted to ensure ±5 minimum range
 # -----------------------------
 forecast_values = {
     'Potatoes SZL/50kg': 82,
@@ -56,7 +56,7 @@ if 'chat_open' not in st.session_state:
     st.session_state.chat_open = False
 
 # -----------------------------
-# Utility Functions
+# Utility Functions - EDITED: Modified create_forecasts_table function
 # -----------------------------
 def get_ai_response(user_message, context_data=None):
     """
@@ -96,10 +96,22 @@ def create_sample_data():
     return pd.DataFrame(data)
 
 def create_forecasts_table():
+    """
+    EDITED: Modified to ensure forecast values have at least ±5 range
+    """
     future_dates = [datetime.now().date() + timedelta(days=i) for i in range(1,31)]
     forecasts_table = {}
+    
     for var, val in forecast_values.items():
-        fluctuation = val * 0.05
+        # Ensure minimum fluctuation of ±5
+        min_fluctuation = 5
+        # For variables with small base values, use percentage-based fluctuation
+        if val < 20:  # Small value items like inflation rate, some prices
+            fluctuation = max(val * 0.15, min_fluctuation)  # Use 15% or ±5, whichever is larger
+        else:  # Larger value items
+            fluctuation = max(val * 0.08, min_fluctuation)  # Use 8% or ±5, whichever is larger
+        
+        # Generate forecast values with the calculated fluctuation
         forecast_vals = val + np.random.uniform(-fluctuation, fluctuation, size=30)
         forecasts_table[var] = pd.DataFrame({
             'Date': future_dates,
