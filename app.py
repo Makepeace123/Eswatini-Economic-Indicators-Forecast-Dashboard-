@@ -28,7 +28,7 @@ st.set_page_config(
 # Forecast values - EDITED: Adjusted to ensure ±5 minimum range
 # -----------------------------
 forecast_values = {
-    'Potatoes SZL/50kg': 82,
+    'Potatoes SZL/10kg': 82,
     'Beans SZL/1kg': 41,
     'Onion SZL/1kg': 9,
     'Diesel SZL/1 liter': 22,
